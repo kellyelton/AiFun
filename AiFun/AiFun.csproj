@@ -68,7 +68,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Ecosystem.cs" />
-    <Compile Include="Entities\Neuron.cs" />
     <Compile Include="Entities\Object.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="MainWindow.xaml.cs">
