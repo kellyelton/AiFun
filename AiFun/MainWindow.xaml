@@ -1,0 +1,54 @@
+﻿<Window x:Class="AiFun.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:aiFun="clr-namespace:AiFun"
+        Title="MainWindow" Height="350" Width="525" WindowState="Maximized"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}"
+        xmlns:ed="http://schemas.microsoft.com/expression/2010/drawing">
+    <Grid>
+        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
+            <TextBlock>
+                <TextBlock.Text>
+                    <MultiBinding StringFormat="{}Generation: {0}">
+                        <Binding Path="Ecosystem.GenerationCount"/>
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+        </StackPanel>
+        <!--<Canvas x:Name="Canvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">-->
+        <ItemsControl ItemsSource="{Binding Ecosystem.AnimateObjects}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="aiFun:Animal">
+                    <Grid>
+                        <Grid.LayoutTransform>
+                            <RotateTransform Angle="{Binding LookingAngle}"/>
+                        </Grid.LayoutTransform>
+                        <!--<Ellipse Width="2" Height="2" Fill="Red" StrokeThickness="0" HorizontalAlignment="Center" VerticalAlignment="Top"/>-->
+                        <ed:LineArrow Fill="#FFF4F4F5" Height="1" Stroke="#FF027602" VerticalAlignment="Top" BendAmount="0" StartCorner="TopRight" StrokeThickness="1">
+                        </ed:LineArrow>
+                        <Ellipse Width="2" Height="2" Fill="Red" StrokeThickness="0" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas x:Name="TheCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"></Canvas>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="ContentTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <ContentPresenter Content="{Binding}"/>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="Canvas.Left" Value="{Binding Left}" />
+                    <Setter Property="Canvas.Top" Value="{Binding Top}" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+        </ItemsControl>
+        <!--</Canvas>-->
+    </Grid>
+</Window>
