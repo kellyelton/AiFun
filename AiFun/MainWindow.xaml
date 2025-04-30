@@ -4,7 +4,7 @@
         xmlns:aiFun="clr-namespace:AiFun"
         Title="MainWindow" Height="350" Width="525" WindowState="Maximized"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
-        xmlns:ed="http://schemas.microsoft.com/expression/2010/drawing">
+        >
     <Grid>
         <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
             <TextBlock>
@@ -24,8 +24,10 @@
                             <RotateTransform Angle="{Binding LookingAngle}"/>
                         </Grid.LayoutTransform>
                         <!--<Ellipse Width="2" Height="2" Fill="Red" StrokeThickness="0" HorizontalAlignment="Center" VerticalAlignment="Top"/>-->
-                        <ed:LineArrow Fill="#FFF4F4F5" Height="1" Stroke="#FF027602" VerticalAlignment="Top" BendAmount="0" StartCorner="TopRight" StrokeThickness="1">
-                        </ed:LineArrow>
+                        <!--<LineArrow Fill="#FFF4F4F5" Height="1" Stroke="#FF027602" VerticalAlignment="Top" BendAmount="0" StartCorner="TopRight" StrokeThickness="1">
+                        </LineArrow>-->
+                        <!-- triangle instead of LineArrow -->
+                        <Polygon Fill="#FFF4F4F5" Height="10" Width="10" Stroke="#FF027602" VerticalAlignment="Top" Points="0,0 50,50 0,100" StrokeThickness="1"/>
                         <Ellipse Width="2" Height="2" Fill="Red" StrokeThickness="0" HorizontalAlignment="Center" VerticalAlignment="Top"/>
                     </Grid>
                 </DataTemplate>
