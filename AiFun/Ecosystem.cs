@@ -96,6 +96,28 @@ namespace AiFun
             }
         }
 
+        public double MaxVisionDistance
+        {
+            get { return _maxVisionDistance; }
+            set
+            {
+                if (value.Equals(_maxVisionDistance)) return;
+                _maxVisionDistance = Math.Max(0, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public double VisionEnergyCostMultiplier
+        {
+            get { return _visionEnergyCostMultiplier; }
+            set
+            {
+                if (value.Equals(_visionEnergyCostMultiplier)) return;
+                _visionEnergyCostMultiplier = Math.Max(0, value);
+                OnPropertyChanged();
+            }
+        }
+
         public int AliveCount
         {
             get { return AnimateObjects.OfType<Animal>().Count(); }
@@ -156,6 +178,8 @@ namespace AiFun
         private double _movementEnergyCostMultiplier = 10;
         private double _pregnancyDurationSeconds = 5;
         private double _corpseDecaySeconds = 10;
+        private double _maxVisionDistance = 300;
+        private double _visionEnergyCostMultiplier = 0.5;
 
         public double SimulationTime { get; private set; }
 
@@ -226,24 +250,28 @@ namespace AiFun
 
         public Object ObjectAlongLine(double angle, Point start)
         {
+            var result = ObjectAlongLine(angle, start, visionDistance: Math.Max(_worldWidth, _worldHeight));
+            return result.HitObject;
+        }
+
+        public VisionResult ObjectAlongLine(double angle, Point start, double visionDistance)
+        {
             var objects = AnimateObjects;
             var objectCount = objects.Count;
-            if (objectCount == 0)
-                return null;
 
             var startX = start.X;
             var startY = start.Y;
             var radians = angle * (Math.PI / 180.0);
             var xDelta = Math.Cos(radians);
             var yDelta = Math.Sin(radians);
-            var maxDistance = Math.Max(_worldWidth, _worldHeight);
             const double stepDistance = 5.0;
             var xStep = xDelta * stepDistance;
             var yStep = yDelta * stepDistance;
             var x = startX + xStep;
             var y = startY + yStep;
-            var spatialIndex = new Dictionary<long, List<AnimateObject>>(objectCount);
 
+            // Build spatial index
+            var spatialIndex = new Dictionary<long, List<AnimateObject>>(objectCount);
             for (var i = 0; i < objectCount; i++)
             {
                 var obj = objects[i];
@@ -269,10 +297,19 @@ namespace AiFun
                 }
             }
 
-            for (var distance = stepDistance; distance <= maxDistance; distance += stepDistance)
+            // Ray march
+            for (var distance = stepDistance; distance <= visionDistance; distance += stepDistance)
             {
+                // Check wall hit (ray exits world bounds)
                 if (x <= 0 || x >= _worldWidth || y <= 0 || y >= _worldHeight)
-                    break;
+                {
+                    return new VisionResult
+                    {
+                        HitType = VisionHitType.Wall,
+                        Distance = distance,
+                        HitObject = null
+                    };
+                }
 
                 var cellKey = ComposeSpatialKey((int)(x / SpatialCellSize), (int)(y / SpatialCellSize));
                 if (spatialIndex.TryGetValue(cellKey, out var candidates))
@@ -286,7 +323,18 @@ namespace AiFun
                             continue;
 
                         if (location.Contains(x, y))
-                            return other;
+                        {
+                            var hitType = VisionHitType.AliveCreature;
+                            if (other is Animal animal && animal.IsDead)
+                                hitType = VisionHitType.DeadCreature;
+
+                            return new VisionResult
+                            {
+                                HitType = hitType,
+                                Distance = distance,
+                                HitObject = other
+                            };
+                        }
                     }
                 }
 
@@ -294,7 +342,12 @@ namespace AiFun
                 y += yStep;
             }
 
-            return null;
+            return new VisionResult
+            {
+                HitType = VisionHitType.None,
+                Distance = 0,
+                HitObject = null
+            };
         }
 
         private static long ComposeSpatialKey(int x, int y)

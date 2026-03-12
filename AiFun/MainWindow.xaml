@@ -5,21 +5,30 @@
         Title="MainWindow" Height="350" Width="525" WindowState="Maximized"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
         >
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
     <Grid>
         <ItemsControl ItemsSource="{Binding Ecosystem.AnimateObjects}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="aiFun:Animal">
-                    <Grid RenderTransformOrigin="0.5,0.5">
-                        <Grid.RenderTransform>
-                            <RotateTransform Angle="{Binding LookingAngle}"/>
-                        </Grid.RenderTransform>
-                        <!--<Ellipse Width="2" Height="2" Fill="Red" StrokeThickness="0" HorizontalAlignment="Center" VerticalAlignment="Top"/>-->
-                        <!--<LineArrow Fill="#FFF4F4F5" Height="1" Stroke="#FF027602" VerticalAlignment="Top" BendAmount="0" StartCorner="TopRight" StrokeThickness="1">
-                        </LineArrow>-->
-                        <!-- triangle instead of LineArrow -->
-                        <Polygon Fill="#FFF4F4F5" Height="10" Width="10" Stroke="#FF027602" VerticalAlignment="Top" Points="0,0 10,5 0,10" StrokeThickness="1"/>
-                        <Ellipse Width="2" Height="2" Fill="#FFE53935" StrokeThickness="0" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,-1,0"/>
-                    </Grid>
+                    <Canvas Width="10" Height="10">
+                        <Canvas.RenderTransform>
+                            <RotateTransform Angle="{Binding LookingAngle}" CenterX="5" CenterY="5"/>
+                        </Canvas.RenderTransform>
+                        <!-- Vision ray — extends from creature nose along heading -->
+                        <Rectangle Canvas.Left="10" Canvas.Top="4.5"
+                                   Width="{Binding VisionRayDisplayLength}" Height="1"
+                                   Visibility="{Binding DataContext.ShowVisionRays, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVis}}">
+                            <Rectangle.Fill>
+                                <SolidColorBrush Color="{Binding VisionRayColor}"/>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <!-- Creature body -->
+                        <Polygon Fill="#FFF4F4F5" Points="0,0 10,5 0,10" Stroke="#FF027602" StrokeThickness="1"/>
+                        <!-- Forward marker (nose dot) -->
+                        <Ellipse Canvas.Left="9" Canvas.Top="4" Width="2" Height="2" Fill="#FFE53935"/>
+                    </Canvas>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
             <ItemsControl.ItemsPanel>
@@ -89,6 +98,15 @@
 
                 <TextBlock Margin="0,6,0,0" Text="Corpse Decay (s)"/>
                 <Slider Minimum="1" Maximum="30" Value="{Binding Ecosystem.CorpseDecaySeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Margin="0,6,0,0" Text="Max Vision Distance"/>
+                <Slider Minimum="10" Maximum="600" Value="{Binding Ecosystem.MaxVisionDistance, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Margin="0,6,0,0" Text="Vision Energy Cost"/>
+                <Slider Minimum="0" Maximum="5" Value="{Binding Ecosystem.VisionEnergyCostMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.1"/>
+
+                <CheckBox Margin="0,8,0,0" Content="Show Vision Rays (V)"
+                          IsChecked="{Binding ShowVisionRays, Mode=TwoWay}"/>
 
                 <WrapPanel Margin="0,8,0,0">
                     <Button Content="Reset (F5)" Width="85" Margin="0,0,4,0" Click="OnResetClick"/>

@@ -68,11 +68,23 @@ namespace AiFun
             }
         }
 
+        public bool ShowVisionRays
+        {
+            get { return _showVisionRays; }
+            set
+            {
+                if (value == _showVisionRays) return;
+                _showVisionRays = value;
+                OnPropertyChanged();
+            }
+        }
+
         private DispatcherTimer _timer;
         private Ecosystem _ecosystem;
         private double _tickMilliseconds = 60;
         private bool _isPaused;
         private int _stepsPerFrame = 1;
+        private bool _showVisionRays;
 
         public MainWindow()
         {
@@ -106,6 +118,10 @@ namespace AiFun
             else if (keyEventArgs.Key == Key.Space)
             {
                 IsPaused = !IsPaused;
+            }
+            else if (keyEventArgs.Key == Key.V)
+            {
+                ShowVisionRays = !ShowVisionRays;
             }
         }
 

@@ -97,6 +97,45 @@ namespace AiFun
             }
         }
 
+        public double VisionDistance
+        {
+            get { return _visionDistance; }
+            set
+            {
+                if (value.Equals(_visionDistance)) return;
+                _visionDistance = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public double WallAhead { get; private set; }
+        public double AliveCreatureAhead { get; private set; }
+        public double DeadCreatureAhead { get; private set; }
+        public double DistanceToObjectAhead { get; private set; }
+
+        public string VisionRayColor
+        {
+            get
+            {
+                if (WallAhead > 0) return "#CCFF4444";
+                if (AliveCreatureAhead > 0) return "#CCFFAA00";
+                if (DeadCreatureAhead > 0) return "#CC44CC44";
+                return "#44888888";
+            }
+        }
+
+        public double VisionRayDisplayLength
+        {
+            get
+            {
+                if (VisionDistance <= 0) return 0;
+                // DistanceToObjectAhead is inverted: closer = higher
+                // Actual distance = VisionDistance * (1 - DistanceToObjectAhead)
+                // When nothing detected, DistanceToObjectAhead = 0, so this = VisionDistance (full range)
+                return VisionDistance * (1.0 - DistanceToObjectAhead);
+            }
+        }
+
         public double IsFocusingOnObject
         {
             get { return FocusingObject == null ? 0 : 1; }
@@ -209,6 +248,7 @@ namespace AiFun
         private double _distanceTraveled;
         private double _deltaTurn;
         private double _turnDeltaPerTick;
+        private double _visionDistance;
 
         public Animal(Ecosystem eco)
         {
@@ -224,6 +264,7 @@ namespace AiFun
             Sex = _rnd.NextDouble();
             IsPregnant = false;
             HiddenNeurons = _rnd.Next(0, 5);
+            VisionDistance = _rnd.NextDouble().DenormalizeFromUnit(0, _eco.MaxVisionDistance);
             SetupNetwork().Randomize();
         }
 
@@ -270,7 +311,11 @@ namespace AiFun
             //{
             //    AvailableEnergy -= 100;
             //}
-            FocusingObject = _eco.ObjectAlongLine(LookingAngle, Location.TopLeft);
+            // Vision energy drain
+            AvailableEnergy -= VisionDistance * _eco.VisionEnergyCostMultiplier * time;
+
+            // Update vision properties from ray cast
+            UpdateVision();
         }
 
         public override void HandleTouching()
@@ -331,6 +376,21 @@ namespace AiFun
             }
         }
 
+        public void UpdateVision()
+        {
+            var result = _eco.ObjectAlongLine(LookingAngle, Location.TopLeft, VisionDistance);
+
+            FocusingObject = result.HitObject;
+            WallAhead = result.HitType == VisionHitType.Wall ? 1 : 0;
+            AliveCreatureAhead = result.HitType == VisionHitType.AliveCreature ? 1 : 0;
+            DeadCreatureAhead = result.HitType == VisionHitType.DeadCreature ? 1 : 0;
+
+            if (result.HitType != VisionHitType.None && VisionDistance > 0)
+                DistanceToObjectAhead = 1.0 - (result.Distance / VisionDistance);
+            else
+                DistanceToObjectAhead = 0;
+        }
+
         protected bool CanBreed(Animal other)
         {
             if (IsPregnant) return false;
@@ -370,11 +430,13 @@ namespace AiFun
             // LookingAngle: absolute heading magnitude -> [0,1]
             _mapper.MapInputNormalizedToUnit(x => x.LookingAngle, 0, 360);
 
-            // IsFocusingOnObject: binary 0/1 already unit-scaled
-            _mapper.MapInput(x => x.IsFocusingOnObject);
+            // Vision inputs: at most one of WallAhead/AliveCreatureAhead/DeadCreatureAhead is 1
+            _mapper.MapInput(x => x.WallAhead);
+            _mapper.MapInput(x => x.AliveCreatureAhead);
+            _mapper.MapInput(x => x.DeadCreatureAhead);
 
-            // DistanceToFocusingObject: non-negative magnitude -> [0,1]
-            _mapper.MapInputNormalizedToUnit(x => x.DistanceToFocusingObject, 0, Int32.MaxValue);
+            // DistanceToObjectAhead: already [0,1], inverted (closer = higher)
+            _mapper.MapInput(x => x.DistanceToObjectAhead);
 
             // Output audit:
             // Speed: allow stop and slow movement, but with enough upper range to be visible -> [0,20]
@@ -390,6 +452,7 @@ namespace AiFun
         {
             MovementEfficency.SetToRandom(a1.MovementEfficency, a2.MovementEfficency);
             HiddenNeurons.SetToRandom(a1.HiddenNeurons, a2.HiddenNeurons);
+            VisionDistance = VisionDistance.SetToRandom(a1.VisionDistance, a2.VisionDistance);
 
             var fnet = net.GetFNData().ToArray();
             var a1f = a1.Brain.GetFNData().ToArray();
@@ -429,6 +492,8 @@ namespace AiFun
         {
             base.RefreshBindings();
             OnPropertyChanged(nameof(LookingAngle));
+            OnPropertyChanged(nameof(VisionRayColor));
+            OnPropertyChanged(nameof(VisionRayDisplayLength));
         }
 
         private static double NormalizeAngle(double angle)
