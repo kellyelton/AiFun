@@ -518,7 +518,7 @@ namespace AiFun
                     f.Weight = w1.Weight;
                     continue;
                 }
-                f.Weight = f.Weight.SetToRandom(w1.Weight, w2.Weight, .15);
+                f.Weight = f.Weight.SetToRandom(w1.Weight, w2.Weight, _eco.MutationRate);
             }
             net.SetFNData(fnet);
         }

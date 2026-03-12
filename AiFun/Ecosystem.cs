@@ -119,6 +119,17 @@ namespace AiFun
             }
         }
 
+        public double MutationRate
+        {
+            get { return _mutationRate; }
+            set
+            {
+                if (value.Equals(_mutationRate)) return;
+                _mutationRate = Math.Max(0, Math.Min(1, value));
+                OnPropertyChanged();
+            }
+        }
+
         public int AliveCount
         {
             get { return AnimateObjects.OfType<Animal>().Count(); }
@@ -182,6 +193,7 @@ namespace AiFun
         private double _corpseDecaySeconds = 10;
         private double _maxVisionDistance = 300;
         private double _visionEnergyCostMultiplier = 0.5;
+        private double _mutationRate = 0.001;
 
         public double SimulationTime { get; private set; }
 
