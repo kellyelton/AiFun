@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -157,6 +157,8 @@ namespace AiFun
         private double _pregnancyDurationSeconds = 5;
         private double _corpseDecaySeconds = 10;
 
+        public double SimulationTime { get; private set; }
+
 
         public Ecosystem(double width, double height)
         {
@@ -174,6 +176,7 @@ namespace AiFun
 
         public void Reset()
         {
+            SimulationTime = 0;
             AnimateObjects.Clear();
             _deadObjects.Clear();
             for (var i = 0; i < InitialPopulation; i++)
@@ -205,6 +208,7 @@ namespace AiFun
             var a2 = bestOrder[1];
             AnimateObjects.Clear();
             _deadObjects.Clear();
+            SimulationTime = 0;
             // Calculate da best guys and merge em
             for (var i = 0; i < ElitePopulation; i++)
             {
@@ -300,6 +304,8 @@ namespace AiFun
 
         public void Update(double time)
         {
+            SimulationTime += time;
+
             foreach (var an in AnimateObjects.ToList())
             {
                 an.Update(time);
@@ -313,13 +319,13 @@ namespace AiFun
                         continue;
                     }
                     var anim = an as Animal;
-                    if (anim.IsPregnant && anim.TimeImpregnated < System.DateTime.Now.AddSeconds(-PregnancyDurationSeconds) && anim.IsDead == false)
+                    if (anim.IsPregnant && (SimulationTime - anim.TimeImpregnated) >= PregnancyDurationSeconds && anim.IsDead == false)
                     {
                         Trace.WriteLine("Popped a baby");
                         AnimateObjects.Add(anim.PopBaby());
                     }
 
-                    if (anim.IsDead && anim.TimeOfDeath < System.DateTime.Now.AddSeconds(-CorpseDecaySeconds))
+                    if (anim.IsDead && (SimulationTime - anim.TimeOfDeath) >= CorpseDecaySeconds)
                     {
                         Trace.WriteLine("Disposed of the body");
                         AnimateObjects.Remove(anim);
@@ -367,6 +373,16 @@ namespace AiFun
             RaiseSummaryPropertyChanged();
         }
 
+        public void RefreshUI()
+        {
+            foreach (var obj in AnimateObjects)
+            {
+                obj.RefreshBindings();
+            }
+            OnPropertyChanged(nameof(GenerationCount));
+            RaiseSummaryPropertyChanged();
+        }
+
         private void RaiseSummaryPropertyChanged()
         {
             OnPropertyChanged(nameof(AliveCount));
@@ -381,8 +397,10 @@ namespace AiFun
         [NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
+            if (Entities.Object.SuppressNotifications) return;
             var handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
+

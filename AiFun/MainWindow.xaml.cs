@@ -56,10 +56,23 @@ namespace AiFun
             }
         }
 
+        public int StepsPerFrame
+        {
+            get { return _stepsPerFrame; }
+            set
+            {
+                var newValue = Math.Max(1, value);
+                if (newValue == _stepsPerFrame) return;
+                _stepsPerFrame = newValue;
+                OnPropertyChanged();
+            }
+        }
+
         private DispatcherTimer _timer;
         private Ecosystem _ecosystem;
         private double _tickMilliseconds = 60;
         private bool _isPaused;
+        private int _stepsPerFrame = 1;
 
         public MainWindow()
         {
@@ -98,7 +111,19 @@ namespace AiFun
 
         private void OnTick(object sender, EventArgs e)
         {
-            Ecosystem.Update(SimulationDeltaSeconds);
+            var dt = SimulationDeltaSeconds;
+            var steps = StepsPerFrame;
+
+            if (steps > 1)
+            {
+                Entities.Object.SuppressNotifications = true;
+                for (int i = 0; i < steps - 1; i++)
+                    Ecosystem.Update(dt);
+                Entities.Object.SuppressNotifications = false;
+            }
+
+            Ecosystem.Update(dt);
+            Ecosystem.RefreshUI();
         }
 
         private void OnResetClick(object sender, RoutedEventArgs e)

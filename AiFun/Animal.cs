@@ -42,8 +42,8 @@ namespace AiFun
                 if (_isDead == value) return;
                 if (value == true)
                 {
-                    TimeOfDeath = DateTime.Now;
-                    LengthOfLife = new TimeSpan(TimeOfDeath.Ticks - _born.Ticks);
+                    TimeOfDeath = _eco.SimulationTime;
+                    LengthOfLife = TimeOfDeath - _born;
                 }
                 _isDead = value;
                 OnPropertyChanged("IsDead");
@@ -91,7 +91,7 @@ namespace AiFun
                 _isPregnant = value;
                 if (IsPregnant)
                 {
-                    TimeImpregnated = DateTime.Now;
+                    TimeImpregnated = _eco.SimulationTime;
                 }
                 OnPropertyChanged();
             }
@@ -126,7 +126,7 @@ namespace AiFun
 
         //public double Size { get; private set; }
 
-        public DateTime TimeOfDeath
+        public double TimeOfDeath
         {
             get { return _timeOfDeath; }
             private set
@@ -137,7 +137,7 @@ namespace AiFun
             }
         }
 
-        public TimeSpan LengthOfLife
+        public double LengthOfLife
         {
             get { return _lengthOfLife; }
             private set
@@ -171,7 +171,7 @@ namespace AiFun
             }
         }
 
-        public DateTime TimeImpregnated
+        public double TimeImpregnated
         {
             get { return _timeImpregnated; }
             private set
@@ -185,7 +185,7 @@ namespace AiFun
         {
             get
             {
-                return LengthOfLife.Ticks;
+                return LengthOfLife;
             }
         }
 
@@ -195,12 +195,12 @@ namespace AiFun
         private static Random _rnd = new Random();
         private NetworkMapper<Animal> _mapper;
         private bool _isDead;
-        private DateTime _born;
+        private double _born;
         private bool _isPregnant;
         private double _availableEnergy;
-        private DateTime _timeOfDeath;
-        private TimeSpan _lengthOfLife;
-        private DateTime _timeImpregnated;
+        private double _timeOfDeath;
+        private double _lengthOfLife;
+        private double _timeImpregnated;
         private Animal _baby;
         private bool _wasEaten;
         private double _lookingAngle;
@@ -213,7 +213,7 @@ namespace AiFun
         public Animal(Ecosystem eco)
         {
             _eco = eco;
-            _born = DateTime.Now;
+            _born = eco.SimulationTime;
             AvailableEnergy = _rnd.NextDouble().DenormalizeFromUnit(0, 10000);
             Location = new Rect(_rnd.Next(0, (int)_eco.WorldWidth), _rnd.Next(0, (int)_eco.WorldHeight), 5, 5);
             XVelocity = _rnd.NextDouble().DenormalizeFromUnit(-1, 1);
@@ -230,6 +230,7 @@ namespace AiFun
         public Animal(Ecosystem eco, Animal p1, Animal p2)
         {
             _eco = eco;
+            _born = eco.SimulationTime;
             AvailableEnergy = _rnd.NextDouble().DenormalizeFromUnit(0, 10000);
             Location = new Rect(_rnd.Next(0, (int)_eco.WorldWidth), _rnd.Next(0, (int)_eco.WorldHeight), 5, 5);
             XVelocity = _rnd.NextDouble().DenormalizeFromUnit(-1, 1);
@@ -422,6 +423,12 @@ namespace AiFun
         {
             double dist = Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
             return dist;
+        }
+
+        internal override void RefreshBindings()
+        {
+            base.RefreshBindings();
+            OnPropertyChanged(nameof(LookingAngle));
         }
 
         private static double NormalizeAngle(double angle)

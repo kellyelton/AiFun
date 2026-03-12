@@ -8,6 +8,8 @@ namespace AiFun.Entities
 {
     public abstract class Object : IUpdateable, IPositionable, INotifyPropertyChanged
     {
+        internal static bool SuppressNotifications { get; set; }
+
         private Rect _location;
         public abstract void Update(double time);
 
@@ -20,11 +22,18 @@ namespace AiFun.Entities
 
         public abstract void HandleTouching();
 
+        internal virtual void RefreshBindings()
+        {
+            OnPropertyChanged(nameof(Left));
+            OnPropertyChanged(nameof(Top));
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         [NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
+            if (SuppressNotifications) return;
             var handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
         }

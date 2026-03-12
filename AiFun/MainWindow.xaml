@@ -66,6 +66,9 @@
                 <TextBlock Text="Tick Interval"/>
                 <Slider Minimum="16" Maximum="200" Value="{Binding TickMilliseconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
+                <TextBlock Margin="0,6,0,0" Text="Steps Per Frame"/>
+                <Slider Minimum="1" Maximum="500" Value="{Binding StepsPerFrame, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
                 <TextBlock Margin="0,6,0,0" Text="Initial Population"/>
                 <Slider Minimum="10" Maximum="250" Value="{Binding Ecosystem.InitialPopulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
