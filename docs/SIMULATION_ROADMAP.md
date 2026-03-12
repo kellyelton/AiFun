@@ -201,7 +201,7 @@ Currently `Impregnate()` creates the baby `Animal` object immediately at concept
 ---
 
 ### Step 5: Creature Visuals
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 **Effort:** Small | **Impact:** 🔥 (debugging + fun)
 
 #### 5a. Genetic color

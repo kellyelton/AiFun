@@ -24,8 +24,15 @@
                                 <SolidColorBrush Color="{Binding VisionRayColor}"/>
                             </Rectangle.Fill>
                         </Rectangle>
-                        <!-- Creature body -->
-                        <Polygon Fill="#FFF4F4F5" Points="0,0 10,5 0,10" Stroke="#FF027602" StrokeThickness="1"/>
+                        <!-- Creature body — fill from genetic color, stroke from origin -->
+                        <Polygon Points="0,0 10,5 0,10" StrokeThickness="1.5">
+                            <Polygon.Fill>
+                                <SolidColorBrush Color="{Binding BodyColor}"/>
+                            </Polygon.Fill>
+                            <Polygon.Stroke>
+                                <SolidColorBrush Color="{Binding StrokeColor}"/>
+                            </Polygon.Stroke>
+                        </Polygon>
                         <!-- Forward marker (nose dot) -->
                         <Ellipse Canvas.Left="9" Canvas.Top="4" Width="2" Height="2" Fill="#FFE53935"/>
                     </Canvas>

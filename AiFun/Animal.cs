@@ -231,6 +231,38 @@ namespace AiFun
         public double BabiesCreated { get; set; }
         public double OthersEaten { get; set; }
 
+        // Genetic color channels [0, 1] — inherited via crossover
+        public double ColorR { get; private set; }
+        public double ColorG { get; private set; }
+        public double ColorB { get; private set; }
+
+        public string BodyColor
+        {
+            get
+            {
+                var r = (byte)(ColorR * 255);
+                var g = (byte)(ColorG * 255);
+                var b = (byte)(ColorB * 255);
+                return $"#{r:X2}{g:X2}{b:X2}";
+            }
+        }
+
+        // Origin indicator — set once in constructor, never inherited
+        public AnimalOrigin Origin { get; private set; }
+
+        public string StrokeColor
+        {
+            get
+            {
+                return Origin switch
+                {
+                    AnimalOrigin.Elite => "#FF1565C0",   // blue
+                    AnimalOrigin.Natural => "#FFFDD835", // yellow
+                    _ => "#FF757575",                    // gray for random
+                };
+            }
+        }
+
         private static Random _rnd = new Random();
         private NetworkMapper<Animal> _mapper;
         private bool _isDead;
@@ -265,6 +297,10 @@ namespace AiFun
             IsPregnant = false;
             HiddenNeurons = _rnd.Next(0, 5);
             VisionDistance = _rnd.NextDouble().DenormalizeFromUnit(0, _eco.MaxVisionDistance);
+            ColorR = _rnd.NextDouble();
+            ColorG = _rnd.NextDouble();
+            ColorB = _rnd.NextDouble();
+            Origin = AnimalOrigin.Random;
             SetupNetwork().Randomize();
         }
 
@@ -280,6 +316,7 @@ namespace AiFun
             Speed = _rnd.NextDouble();
             IsPregnant = false;
             Sex = _rnd.NextDouble();
+            Origin = AnimalOrigin.Elite;
             Breed(p1, p2, SetupNetwork());
         }
 
@@ -402,6 +439,7 @@ namespace AiFun
         protected void Impregnate(Animal other)
         {
             _baby = new Animal(this._eco, this, other);
+            _baby.Origin = AnimalOrigin.Natural;
             IsPregnant = true;
         }
 
@@ -453,6 +491,9 @@ namespace AiFun
             MovementEfficency.SetToRandom(a1.MovementEfficency, a2.MovementEfficency);
             HiddenNeurons.SetToRandom(a1.HiddenNeurons, a2.HiddenNeurons);
             VisionDistance = VisionDistance.SetToRandom(a1.VisionDistance, a2.VisionDistance);
+            ColorR = ColorR.SetToRandom(a1.ColorR, a2.ColorR);
+            ColorG = ColorG.SetToRandom(a1.ColorG, a2.ColorG);
+            ColorB = ColorB.SetToRandom(a1.ColorB, a2.ColorB);
 
             var fnet = net.GetFNData().ToArray();
             var a1f = a1.Brain.GetFNData().ToArray();
@@ -494,6 +535,8 @@ namespace AiFun
             OnPropertyChanged(nameof(LookingAngle));
             OnPropertyChanged(nameof(VisionRayColor));
             OnPropertyChanged(nameof(VisionRayDisplayLength));
+            OnPropertyChanged(nameof(BodyColor));
+            OnPropertyChanged(nameof(StrokeColor));
         }
 
         private static double NormalizeAngle(double angle)
@@ -504,5 +547,12 @@ namespace AiFun
             return normalized;
         }
 
+    }
+
+    public enum AnimalOrigin
+    {
+        Random,
+        Elite,
+        Natural
     }
 }
