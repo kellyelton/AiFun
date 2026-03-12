@@ -251,10 +251,7 @@ namespace AiFun
         public void NewGeneration()
         {
             var bestOrder = _deadObjects.OfType<Animal>()
-                .OrderByDescending(x => x.DistanceTraveled)
-                .ThenByDescending(x => x.DeltaTurn)
-                .ThenByDescending(x => x.LengthOfLife)
-                .ThenByDescending(x => x.BabiesCreated)
+                .OrderByDescending(x => x.Fitness)
                 .Take(TopBreeders)
                 .ToList();
             if (bestOrder.Count < 2)

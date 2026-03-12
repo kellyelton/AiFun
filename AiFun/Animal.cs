@@ -196,6 +196,7 @@ namespace AiFun
                 if (value.Equals(_distanceTraveled)) return;
                 _distanceTraveled = value;
                 OnPropertyChanged();
+                OnPropertyChanged("Fitness");
             }
         }
 
@@ -207,6 +208,7 @@ namespace AiFun
                 if (value.Equals(_deltaTurn)) return;
                 _deltaTurn = value;
                 OnPropertyChanged();
+                OnPropertyChanged("Fitness");
             }
         }
 
@@ -224,7 +226,12 @@ namespace AiFun
         {
             get
             {
-                return LengthOfLife;
+                // Composite fitness: primary=distance, secondary=turn, tertiary=survival, quaternary=babies
+                // Weights chosen so primary always dominates secondary, etc.
+                return DistanceTraveled * 1000000
+                     + DeltaTurn * 1000
+                     + LengthOfLife * 1
+                     + BabiesCreated * 0.001;
             }
         }
 
