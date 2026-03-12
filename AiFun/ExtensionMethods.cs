@@ -8,6 +8,7 @@ namespace AiFun
     public static class ExtensionMethods
     {
         private static Random _rnd = new Random();
+
         public static BasicNetwork Randomize(this BasicNetwork net)
         {
             net.Reset();
@@ -30,28 +31,89 @@ namespace AiFun
                 for (int toNeuron = 0; toNeuron < layerNeuronCount; ++toNeuron)
                 {
                     //double v = Randomize(network.GetWeight(fromLayer, fromNeuron, toNeuron));
-                    double v = _rnd.NextDouble().Denormalize(-1, 1);
+                    double v = _rnd.NextDouble().DenormalizeFromUnit(-1, 1);
                     network.SetWeight(fromLayer, fromNeuron, toNeuron, v);
                 }
             }
         }
 
-        public static double Normalize(this double num, double curMin, double curMax)
+        /// <summary>
+        /// Normalizes a value from an arbitrary range into the unit range [0, 1].
+        /// </summary>
+        /// <param name="num">The value to normalize.</param>
+        /// <param name="curMin">The minimum of the source range.</param>
+        /// <param name="curMax">The maximum of the source range.</param>
+        /// <returns>The normalized value in [0, 1].</returns>
+        public static double NormalizeToUnit(this double num, double curMin, double curMax)
         {
-            var ret = (num - curMin) / (curMax - curMin);
-            ret = ret*2;
-            ret = ret - 1;
-            return ret;
-        }
+            if (Math.Abs(curMax - curMin) < double.Epsilon)
+                return 0;
 
-        public static double Normalize(this int num, double curMin, double curMax)
-        {
             return (num - curMin) / (curMax - curMin);
         }
 
-        public static double Denormalize(this double num, double min, double max)
+        /// <summary>
+        /// Normalizes an integer value from an arbitrary range into the unit range [0, 1].
+        /// </summary>
+        /// <param name="num">The value to normalize.</param>
+        /// <param name="curMin">The minimum of the source range.</param>
+        /// <param name="curMax">The maximum of the source range.</param>
+        /// <returns>The normalized value in [0, 1].</returns>
+        public static double NormalizeToUnit(this int num, double curMin, double curMax)
         {
-            return (num * (max - min) + min);
+            return ((double)num).NormalizeToUnit(curMin, curMax);
+        }
+
+        /// <summary>
+        /// Normalizes a value from an arbitrary range into the signed unit range [-1, 1].
+        /// </summary>
+        /// <param name="num">The value to normalize.</param>
+        /// <param name="curMin">The minimum of the source range.</param>
+        /// <param name="curMax">The maximum of the source range.</param>
+        /// <returns>The normalized value in [-1, 1].</returns>
+        public static double NormalizeToSignedUnit(this double num, double curMin, double curMax)
+        {
+            return (num.NormalizeToUnit(curMin, curMax) * 2) - 1;
+        }
+
+        /// <summary>
+        /// Normalizes an integer value from an arbitrary range into the signed unit range [-1, 1].
+        /// </summary>
+        /// <param name="num">The value to normalize.</param>
+        /// <param name="curMin">The minimum of the source range.</param>
+        /// <param name="curMax">The maximum of the source range.</param>
+        /// <returns>The normalized value in [-1, 1].</returns>
+        public static double NormalizeToSignedUnit(this int num, double curMin, double curMax)
+        {
+            return ((double)num).NormalizeToSignedUnit(curMin, curMax);
+        }
+
+        /// <summary>
+        /// Converts a unit-range value [0, 1] back into a target range.
+        /// Values outside [0, 1] are clamped before conversion.
+        /// </summary>
+        /// <param name="num">The unit-range value to denormalize.</param>
+        /// <param name="min">The minimum of the destination range.</param>
+        /// <param name="max">The maximum of the destination range.</param>
+        /// <returns>The denormalized value in [min, max].</returns>
+        public static double DenormalizeFromUnit(this double num, double min, double max)
+        {
+            var value = num.Clamp(0, 1);
+            return (value * (max - min) + min);
+        }
+
+        /// <summary>
+        /// Converts a signed-unit value [-1, 1] back into a target range.
+        /// Values outside [-1, 1] are clamped before conversion.
+        /// </summary>
+        /// <param name="num">The signed-unit value to denormalize.</param>
+        /// <param name="min">The minimum of the destination range.</param>
+        /// <param name="max">The maximum of the destination range.</param>
+        /// <returns>The denormalized value in [min, max].</returns>
+        public static double DenormalizeFromSignedUnit(this double num, double min, double max)
+        {
+            var value = num.Clamp(-1, 1);
+            return ((value + 1) / 2).DenormalizeFromUnit(min, max);
         }
 
         public static T SetToRandom<T>(this T num, T first, T second)

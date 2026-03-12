@@ -71,9 +71,19 @@ namespace AiFun
             _inmaps.Add(_inmaps.Count, new Map(propInfo, _instance, adjust));
         }
 
-        public void MapInputNormalized(Expression<Func<T, double>> expression, int min, int max)
+        public void MapInputNormalizedToUnit(Expression<Func<T, double>> expression, double min, double max)
         {
-            MapInput(expression, x => x.Normalize(min, max));
+            MapInput(expression, x => x.NormalizeToUnit(min, max));
+        }
+
+        public void MapInputNormalizedToSignedUnit(Expression<Func<T, double>> expression, double min, double max)
+        {
+            MapInput(expression, x => x.NormalizeToSignedUnit(min, max));
+        }
+
+        public void MapInputNormalized(Expression<Func<T, double>> expression, double min, double max)
+        {
+            MapInputNormalizedToSignedUnit(expression, min, max);
         }
 
         public void MapOutput(Expression<Func<T, double>> expression)
@@ -88,9 +98,19 @@ namespace AiFun
             _outmaps.Add(_outmaps.Count, new Map(propInfo, _instance, adjust));
         }
 
-        public void MapOutputDenormalized(Expression<Func<T, double>> expression, int min, int max)
+        public void MapOutputDenormalizedFromUnit(Expression<Func<T, double>> expression, double min, double max)
         {
-            MapOutput(expression, x => x.Denormalize(min, max));
+            MapOutput(expression, x => x.DenormalizeFromUnit(min, max));
+        }
+
+        public void MapOutputDenormalizedFromSignedUnit(Expression<Func<T, double>> expression, double min, double max)
+        {
+            MapOutput(expression, x => x.DenormalizeFromSignedUnit(min, max));
+        }
+
+        public void MapOutputDenormalized(Expression<Func<T, double>> expression, double min, double max)
+        {
+            MapOutputDenormalizedFromSignedUnit(expression, min, max);
         }
 
         protected PropertyInfo GetProperty(Expression<Func<T, double>> expression)
