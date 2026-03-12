@@ -23,6 +23,17 @@ namespace AiFun
             }
         }
 
+        public double TurnDeltaPerTick
+        {
+            get { return _turnDeltaPerTick; }
+            set
+            {
+                if (value.Equals(_turnDeltaPerTick)) return;
+                _turnDeltaPerTick = value;
+                OnPropertyChanged();
+            }
+        }
+
         public bool IsDead
         {
             get { return _isDead; }
@@ -197,15 +208,17 @@ namespace AiFun
         private Object _focusingObject;
         private double _distanceTraveled;
         private double _deltaTurn;
+        private double _turnDeltaPerTick;
 
         public Animal(Ecosystem eco)
         {
             _eco = eco;
             _born = DateTime.Now;
-            AvailableEnergy = _rnd.NextDouble().Denormalize(0, 10000);
+            AvailableEnergy = _rnd.NextDouble().DenormalizeFromUnit(0, 10000);
             Location = new Rect(_rnd.Next(0, (int)_eco.WorldWidth), _rnd.Next(0, (int)_eco.WorldHeight), 5, 5);
-            XVelocity = _rnd.NextDouble().Denormalize(-1, 1);
-            YVelocity = _rnd.NextDouble().Denormalize(-1, 1);
+            XVelocity = _rnd.NextDouble().DenormalizeFromUnit(-1, 1);
+            YVelocity = _rnd.NextDouble().DenormalizeFromUnit(-1, 1);
+            LookingAngle = _rnd.NextDouble().DenormalizeFromUnit(0, 360);
             Speed = _rnd.NextDouble();
             MovementEfficency = _rnd.NextDouble();
             Sex = _rnd.NextDouble();
@@ -217,10 +230,11 @@ namespace AiFun
         public Animal(Ecosystem eco, Animal p1, Animal p2)
         {
             _eco = eco;
-            AvailableEnergy = _rnd.NextDouble().Denormalize(0, 10000);
+            AvailableEnergy = _rnd.NextDouble().DenormalizeFromUnit(0, 10000);
             Location = new Rect(_rnd.Next(0, (int)_eco.WorldWidth), _rnd.Next(0, (int)_eco.WorldHeight), 5, 5);
-            XVelocity = _rnd.NextDouble().Denormalize(-1, 1);
-            YVelocity = _rnd.NextDouble().Denormalize(-1, 1);
+            XVelocity = _rnd.NextDouble().DenormalizeFromUnit(-1, 1);
+            YVelocity = _rnd.NextDouble().DenormalizeFromUnit(-1, 1);
+            LookingAngle = _rnd.NextDouble().DenormalizeFromUnit(0, 360);
             Speed = _rnd.NextDouble();
             IsPregnant = false;
             Sex = _rnd.NextDouble();
@@ -236,6 +250,7 @@ namespace AiFun
             }
             var curAng = LookingAngle;
             _mapper.Update();
+            LookingAngle = NormalizeAngle(curAng + TurnDeltaPerTick);
 
             var curLocation = Location;
             this.UpdateLocation(time);
@@ -342,15 +357,30 @@ namespace AiFun
             //_mapper.MapInputNormalized(x => x.Left, 0, 2000);
             //_mapper.MapInputNormalized(x => x.Top, 0, 2000);
             //_mapper.MapInput(x => x.Speed);
-            _mapper.MapInput(x => x.AvailableEnergy, x => x.Clamp(0, 10000).Normalize(0, 10000));
-            _mapper.MapInputNormalized(x => x.LookingAngle, 0, 360);
-            _mapper.MapInput(x => x.IsFocusingOnObject);
-            _mapper.MapInputNormalized(x => x.DistanceToFocusingObject, 0, Int32.MaxValue);
 
-            _mapper.MapOutputDenormalized(x => x.XVelocity, -1, 1);
-            _mapper.MapOutputDenormalized(x => x.YVelocity, -1, 1);
-            _mapper.MapOutput(x => x.Speed, x => x / 4);
-            _mapper.MapOutput(x=>x.LookingAngle, x=>Math.Abs(x.Denormalize(0, 360)));
+            // Input audit:
+            // AvailableEnergy: non-negative magnitude -> [0,1]
+            _mapper.MapInput(x => x.AvailableEnergy, x => x.Clamp(0, 10000).NormalizeToUnit(0, 10000));
+
+            // LookingAngle: absolute heading magnitude -> [0,1]
+            _mapper.MapInputNormalizedToUnit(x => x.LookingAngle, 0, 360);
+
+            // IsFocusingOnObject: binary 0/1 already unit-scaled
+            _mapper.MapInput(x => x.IsFocusingOnObject);
+
+            // DistanceToFocusingObject: non-negative magnitude -> [0,1]
+            _mapper.MapInputNormalizedToUnit(x => x.DistanceToFocusingObject, 0, Int32.MaxValue);
+
+            // Output audit:
+            // X/Y velocity: directional vector component -> [-1,1]
+            _mapper.MapOutputDenormalizedFromSignedUnit(x => x.XVelocity, -1, 1);
+            _mapper.MapOutputDenormalizedFromSignedUnit(x => x.YVelocity, -1, 1);
+
+            // Speed: allow stop and slow movement, but no negative speed -> [0,0.25]
+            _mapper.MapOutputDenormalizedFromSignedUnit(x => x.Speed, 0, 0.25);
+
+            // TurnDeltaPerTick: relative heading change per tick -> [-10,+10] degrees
+            _mapper.MapOutputDenormalizedFromSignedUnit(x => x.TurnDeltaPerTick, -10, 10);
             //_mapper.MapOutputDenormalized(x => x.LookingAngle, 0, 360);
             return _mapper.CreateNetwork(HiddenNeurons);
         }
@@ -370,7 +400,7 @@ namespace AiFun
 
                 if (w1 == null && w2 == null)
                 {
-                    f.Weight = _rnd.NextDouble().Normalize(-1, 1);
+                    f.Weight = _rnd.NextDouble().DenormalizeFromUnit(-1, 1);
                     continue;
                 }
                 if (w1 == null)
@@ -393,5 +423,14 @@ namespace AiFun
             double dist = Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
             return dist;
         }
+
+        private static double NormalizeAngle(double angle)
+        {
+            var normalized = angle % 360;
+            if (normalized < 0)
+                normalized += 360;
+            return normalized;
+        }
+
     }
 }
