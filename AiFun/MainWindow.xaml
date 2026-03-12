@@ -6,28 +6,18 @@
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
         >
     <Grid>
-        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
-            <TextBlock>
-                <TextBlock.Text>
-                    <MultiBinding StringFormat="{}Generation: {0}">
-                        <Binding Path="Ecosystem.GenerationCount"/>
-                    </MultiBinding>
-                </TextBlock.Text>
-            </TextBlock>
-        </StackPanel>
-        <!--<Canvas x:Name="Canvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">-->
         <ItemsControl ItemsSource="{Binding Ecosystem.AnimateObjects}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="aiFun:Animal">
-                    <Grid>
-                        <Grid.LayoutTransform>
+                    <Grid RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
                             <RotateTransform Angle="{Binding LookingAngle}"/>
-                        </Grid.LayoutTransform>
+                        </Grid.RenderTransform>
                         <!--<Ellipse Width="2" Height="2" Fill="Red" StrokeThickness="0" HorizontalAlignment="Center" VerticalAlignment="Top"/>-->
                         <!--<LineArrow Fill="#FFF4F4F5" Height="1" Stroke="#FF027602" VerticalAlignment="Top" BendAmount="0" StartCorner="TopRight" StrokeThickness="1">
                         </LineArrow>-->
                         <!-- triangle instead of LineArrow -->
-                        <Polygon Fill="#FFF4F4F5" Height="10" Width="10" Stroke="#FF027602" VerticalAlignment="Top" Points="0,0 50,50 0,100" StrokeThickness="1"/>
+                        <Polygon Fill="#FFF4F4F5" Height="10" Width="10" Stroke="#FF027602" VerticalAlignment="Top" Points="0,0 10,5 0,10" StrokeThickness="1"/>
                         <Ellipse Width="2" Height="2" Fill="Red" StrokeThickness="0" HorizontalAlignment="Center" VerticalAlignment="Top"/>
                     </Grid>
                 </DataTemplate>
@@ -51,6 +41,58 @@
                 </Style>
             </ItemsControl.ItemContainerStyle>
         </ItemsControl>
-        <!--</Canvas>-->
+
+        <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8" Padding="8" Background="#AAFFFFFF" CornerRadius="4" Panel.ZIndex="10">
+            <StackPanel Width="280">
+                <TextBlock FontWeight="Bold" Margin="0,0,0,6" Text="Simulation Controls"/>
+
+                <UniformGrid Columns="2" Margin="0,0,0,8">
+                    <TextBlock Text="Generation"/>
+                    <TextBlock Text="{Binding Ecosystem.GenerationCount}" HorizontalAlignment="Right"/>
+                    <TextBlock Text="Alive"/>
+                    <TextBlock Text="{Binding Ecosystem.AliveCount}" HorizontalAlignment="Right"/>
+                    <TextBlock Text="Dead"/>
+                    <TextBlock Text="{Binding Ecosystem.DeadCount}" HorizontalAlignment="Right"/>
+                    <TextBlock Text="Pregnant"/>
+                    <TextBlock Text="{Binding Ecosystem.PregnantCount}" HorizontalAlignment="Right"/>
+                    <TextBlock Text="Avg Energy"/>
+                    <TextBlock Text="{Binding Ecosystem.AverageEnergy, StringFormat={}{0:F0}}" HorizontalAlignment="Right"/>
+                    <TextBlock Text="Avg Speed"/>
+                    <TextBlock Text="{Binding Ecosystem.AverageSpeed, StringFormat={}{0:F2}}" HorizontalAlignment="Right"/>
+                    <TextBlock Text="Tick (ms)"/>
+                    <TextBlock Text="{Binding TickMilliseconds, StringFormat={}{0:F0}}" HorizontalAlignment="Right"/>
+                </UniformGrid>
+
+                <TextBlock Text="Tick Interval"/>
+                <Slider Minimum="16" Maximum="200" Value="{Binding TickMilliseconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Margin="0,6,0,0" Text="Initial Population"/>
+                <Slider Minimum="10" Maximum="250" Value="{Binding Ecosystem.InitialPopulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Margin="0,6,0,0" Text="Elite Offspring"/>
+                <Slider Minimum="0" Maximum="250" Value="{Binding Ecosystem.ElitePopulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Margin="0,6,0,0" Text="Random Offspring"/>
+                <Slider Minimum="0" Maximum="250" Value="{Binding Ecosystem.RandomPopulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Margin="0,6,0,0" Text="Base Energy Drain"/>
+                <Slider Minimum="10" Maximum="500" Value="{Binding Ecosystem.BaseEnergyDrainPerSecond, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Margin="0,6,0,0" Text="Movement Cost"/>
+                <Slider Minimum="1" Maximum="50" Value="{Binding Ecosystem.MovementEnergyCostMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Margin="0,6,0,0" Text="Pregnancy (s)"/>
+                <Slider Minimum="1" Maximum="20" Value="{Binding Ecosystem.PregnancyDurationSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Margin="0,6,0,0" Text="Corpse Decay (s)"/>
+                <Slider Minimum="1" Maximum="30" Value="{Binding Ecosystem.CorpseDecaySeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <WrapPanel Margin="0,8,0,0">
+                    <Button Content="Reset (F5)" Width="85" Margin="0,0,4,0" Click="OnResetClick"/>
+                    <Button Content="Next Gen (G)" Width="95" Margin="0,0,4,0" Click="OnNextGenerationClick"/>
+                    <Button Content="Pause/Resume (Space)" Width="130" Click="OnPauseResumeClick"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>
