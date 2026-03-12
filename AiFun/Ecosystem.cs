@@ -10,6 +10,7 @@ using System.Windows;
 using AiFun.Annotations;
 using AiFun.Entities;
 using Object = AiFun.Entities.Object;
+using System.Collections.Specialized;
 
 namespace AiFun
 {
@@ -165,6 +166,7 @@ namespace AiFun
         }
 
         private List<AnimateObject> _deadObjects { get; set; }
+        public ObservableCollection<GenerationStats> GenerationHistory { get; private set; }
         public double WorldWidth { get { return _worldWidth; } }
         public double WorldHeight { get { return _worldHeight; } }
 
@@ -183,6 +185,7 @@ namespace AiFun
 
         public double SimulationTime { get; private set; }
 
+        private int _peakPopulation;
 
         public Ecosystem(double width, double height)
         {
@@ -190,7 +193,13 @@ namespace AiFun
             _worldHeight = height;
             AnimateObjects = new ObservableCollection<AnimateObject>();
             _deadObjects = new List<AnimateObject>();
-            AnimateObjects.CollectionChanged += (sender, args) => RaiseSummaryPropertyChanged();
+            GenerationHistory = new ObservableCollection<GenerationStats>();
+            AnimateObjects.CollectionChanged += (sender, args) =>
+            {
+                RaiseSummaryPropertyChanged();
+                if (AnimateObjects.Count > _peakPopulation)
+                    _peakPopulation = AnimateObjects.Count;
+            };
         }
 
         public void Create<T>(T obj) where T : AnimateObject
@@ -201,8 +210,11 @@ namespace AiFun
         public void Reset()
         {
             SimulationTime = 0;
+            GenerationCount = 0;
+            _peakPopulation = 0;
             AnimateObjects.Clear();
             _deadObjects.Clear();
+            GenerationHistory.Clear();
             for (var i = 0; i < InitialPopulation; i++)
             {
                 var an = new Animal(this);
@@ -230,8 +242,27 @@ namespace AiFun
 
             var a1 = bestOrder[0];
             var a2 = bestOrder[1];
+
+            // Record generation stats before clearing
+            var allDead = _deadObjects.OfType<Animal>().ToList();
+            if (allDead.Count > 0)
+            {
+                GenerationHistory.Add(new GenerationStats
+                {
+                    Generation = GenerationCount,
+                    BestSurvivalTime = allDead.Max(x => x.LengthOfLife),
+                    AvgSurvivalTime = allDead.Average(x => x.LengthOfLife),
+                    BestDistance = allDead.Max(x => x.DistanceTraveled),
+                    AvgDistance = allDead.Average(x => x.DistanceTraveled),
+                    AvgVisionDistance = allDead.Average(x => x.VisionDistance),
+                    TotalBabies = (int)allDead.Sum(x => x.BabiesCreated),
+                    PopulationPeak = _peakPopulation
+                });
+            }
+
             AnimateObjects.Clear();
             _deadObjects.Clear();
+            _peakPopulation = 0;
             SimulationTime = 0;
             // Calculate da best guys and merge em
             for (var i = 0; i < ElitePopulation; i++)

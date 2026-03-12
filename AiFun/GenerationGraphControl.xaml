@@ -1,0 +1,57 @@
+<UserControl x:Class="AiFun.GenerationGraphControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="420" Height="280">
+    <Border Background="#DD1A1A2E" CornerRadius="6" BorderBrush="#44FFFFFF" BorderThickness="1" Padding="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title -->
+            <TextBlock Grid.Row="0" Text="Evolution Progress" FontWeight="SemiBold" FontSize="13"
+                       Foreground="#DDFFFFFF" Margin="0,0,0,6"/>
+
+            <!-- Chart area -->
+            <Border Grid.Row="1" Background="#22FFFFFF" CornerRadius="3" ClipToBounds="True">
+                <Grid>
+                    <!-- Main chart -->
+                    <Canvas x:Name="ChartCanvas" Margin="4,4,40,16" ClipToBounds="False"
+                            SizeChanged="ChartCanvas_SizeChanged"/>
+                    <!-- X-axis labels -->
+                    <Canvas x:Name="XAxisCanvas" Height="16" VerticalAlignment="Bottom" Margin="4,0,40,0"/>
+                    <!-- No data message -->
+                    <TextBlock x:Name="NoDataText" Text="Waiting for first generation..."
+                               Foreground="#66FFFFFF" FontSize="11" FontStyle="Italic"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- Legend -->
+            <WrapPanel Grid.Row="2" Margin="0,6,0,0" HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,0" MouseLeftButtonDown="Legend_Click" Tag="BestSurvival" Cursor="Hand">
+                    <Rectangle x:Name="LegendBestSurvival" Width="14" Height="3" Fill="#FF4FC3F7" Margin="0,0,4,0" VerticalAlignment="Center" RadiusX="1" RadiusY="1"/>
+                    <TextBlock Text="Best Survival" Foreground="#AAFFFFFF" FontSize="10"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,0" MouseLeftButtonDown="Legend_Click" Tag="AvgSurvival" Cursor="Hand">
+                    <Rectangle x:Name="LegendAvgSurvival" Width="14" Height="3" Fill="#FF81C784" Margin="0,0,4,0" VerticalAlignment="Center" RadiusX="1" RadiusY="1"/>
+                    <TextBlock Text="Avg Survival" Foreground="#AAFFFFFF" FontSize="10"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,0" MouseLeftButtonDown="Legend_Click" Tag="BestDistance" Cursor="Hand">
+                    <Rectangle x:Name="LegendBestDistance" Width="14" Height="3" Fill="#FFFFB74D" Margin="0,0,4,0" VerticalAlignment="Center" RadiusX="1" RadiusY="1"/>
+                    <TextBlock Text="Best Distance" Foreground="#AAFFFFFF" FontSize="10"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,0" MouseLeftButtonDown="Legend_Click" Tag="AvgVision" Cursor="Hand">
+                    <Rectangle x:Name="LegendAvgVision" Width="14" Height="3" Fill="#FFCE93D8" Margin="0,0,4,0" VerticalAlignment="Center" RadiusX="1" RadiusY="1"/>
+                    <TextBlock Text="Avg Vision" Foreground="#AAFFFFFF" FontSize="10"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,0" MouseLeftButtonDown="Legend_Click" Tag="TotalBabies" Cursor="Hand">
+                    <Rectangle x:Name="LegendTotalBabies" Width="14" Height="3" Fill="#FFF06292" Margin="0,0,4,0" VerticalAlignment="Center" RadiusX="1" RadiusY="1"/>
+                    <TextBlock Text="Babies" Foreground="#AAFFFFFF" FontSize="10"/>
+                </StackPanel>
+            </WrapPanel>
+        </Grid>
+    </Border>
+</UserControl>

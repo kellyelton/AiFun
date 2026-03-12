@@ -100,6 +100,7 @@ namespace AiFun
         {
             this.Loaded -= OnLoaded;
             Ecosystem = new Ecosystem((this.Content as FrameworkElement).ActualWidth, (this.Content as FrameworkElement).ActualHeight);
+            GenerationGraph.BindToHistory(Ecosystem.GenerationHistory);
             Ecosystem.Reset();
             _timer.Start();
         }
