@@ -130,6 +130,17 @@ namespace AiFun
             }
         }
 
+        public int TopBreeders
+        {
+            get { return _topBreeders; }
+            set
+            {
+                if (value == _topBreeders) return;
+                _topBreeders = Math.Max(2, value);
+                OnPropertyChanged();
+            }
+        }
+
         public int AliveCount
         {
             get { return AnimateObjects.OfType<Animal>().Count(); }
@@ -194,10 +205,12 @@ namespace AiFun
         private double _maxVisionDistance = 300;
         private double _visionEnergyCostMultiplier = 0.5;
         private double _mutationRate = 0.001;
+        private int _topBreeders = 10;
 
         public double SimulationTime { get; private set; }
 
         private int _peakPopulation;
+        private static Random _rnd = new Random();
 
         public Ecosystem(double width, double height)
         {
@@ -238,22 +251,17 @@ namespace AiFun
         public void NewGeneration()
         {
             var bestOrder = _deadObjects.OfType<Animal>()
-                //.Where(x=>x.DistanceTraveled > 5)
                 .OrderByDescending(x => x.DistanceTraveled)
                 .ThenByDescending(x => x.DeltaTurn)
                 .ThenByDescending(x => x.LengthOfLife)
-                //.ThenByDescending(x => x.OthersEaten)
                 .ThenByDescending(x => x.BabiesCreated)
-                .Take(2)
+                .Take(TopBreeders)
                 .ToList();
             if (bestOrder.Count < 2)
             {
                 Reset();
                 return;
             }
-
-            var a1 = bestOrder[0];
-            var a2 = bestOrder[1];
 
             // Record generation stats before clearing
             var allDead = _deadObjects.OfType<Animal>().ToList();
@@ -276,10 +284,13 @@ namespace AiFun
             _deadObjects.Clear();
             _peakPopulation = 0;
             SimulationTime = 0;
-            // Calculate da best guys and merge em
+            // Create elite offspring by randomly pairing from the breeding pool
             for (var i = 0; i < ElitePopulation; i++)
             {
-                var an = new Animal(this, a1, a2);
+                var idx1 = _rnd.Next(bestOrder.Count);
+                int idx2;
+                do { idx2 = _rnd.Next(bestOrder.Count); } while (idx2 == idx1 && bestOrder.Count > 1);
+                var an = new Animal(this, bestOrder[idx1], bestOrder[idx2]);
                 AnimateObjects.Add(an);
             }
             for (var i = 0; i < RandomPopulation; i++)

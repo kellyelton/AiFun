@@ -116,6 +116,9 @@
                 <TextBlock Margin="0,6,0,0" Text="Vision Energy Cost"/>
                 <Slider Minimum="0" Maximum="5" Value="{Binding Ecosystem.VisionEnergyCostMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.1"/>
 
+                <TextBlock Margin="0,6,0,0" Text="{Binding Ecosystem.TopBreeders, StringFormat='Top Breeders ({0})'}"/>
+                <Slider Minimum="2" Maximum="50" Value="{Binding Ecosystem.TopBreeders, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
+
                 <TextBlock Margin="0,6,0,0" Text="{Binding Ecosystem.MutationRate, StringFormat='Mutation Rate ({0:P1})'}"/>
                 <Slider Minimum="0.001" Maximum="0.10" Value="{Binding Ecosystem.MutationRate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.001"/>
 
