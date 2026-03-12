@@ -15,6 +15,8 @@ namespace AiFun
 {
     public class Ecosystem : INotifyPropertyChanged
     {
+        private const int SpatialCellSize = 40;
+
         public ObservableCollection<AnimateObject> AnimateObjects { get; set; }
 
         public int InitialPopulation
@@ -220,30 +222,80 @@ namespace AiFun
 
         public Object ObjectAlongLine(double angle, Point start)
         {
+            var objects = AnimateObjects;
+            var objectCount = objects.Count;
+            if (objectCount == 0)
+                return null;
+
+            var startX = start.X;
+            var startY = start.Y;
             var radians = angle * (Math.PI / 180.0);
             var xDelta = Math.Cos(radians);
             var yDelta = Math.Sin(radians);
             var maxDistance = Math.Max(_worldWidth, _worldHeight);
+            const double stepDistance = 5.0;
+            var xStep = xDelta * stepDistance;
+            var yStep = yDelta * stepDistance;
+            var x = startX + xStep;
+            var y = startY + yStep;
+            var spatialIndex = new Dictionary<long, List<AnimateObject>>(objectCount);
 
-            for (var distance = 5.0; distance <= maxDistance; distance += 5.0)
+            for (var i = 0; i < objectCount; i++)
             {
-                var x = start.X + (xDelta * distance);
-                var y = start.Y + (yDelta * distance);
+                var obj = objects[i];
+                var location = obj.Location;
+                var minCellX = (int)(location.Left / SpatialCellSize);
+                var maxCellX = (int)(location.Right / SpatialCellSize);
+                var minCellY = (int)(location.Top / SpatialCellSize);
+                var maxCellY = (int)(location.Bottom / SpatialCellSize);
 
-                if (x <= 0 || x >= _worldWidth || y <= 0 || y >= _worldHeight)
-                    break;
-
-                foreach (var other in AnimateObjects)
+                for (var cellX = minCellX; cellX <= maxCellX; cellX++)
                 {
-                    if (Math.Abs(other.Location.Left - start.X) < 0.001 && Math.Abs(other.Location.Top - start.Y) < 0.001)
-                        continue;
+                    for (var cellY = minCellY; cellY <= maxCellY; cellY++)
+                    {
+                        var key = ComposeSpatialKey(cellX, cellY);
+                        if (spatialIndex.TryGetValue(key, out var bucket) == false)
+                        {
+                            bucket = new List<AnimateObject>();
+                            spatialIndex[key] = bucket;
+                        }
 
-                    if (other.Location.Contains(x, y))
-                        return other;
+                        bucket.Add(obj);
+                    }
                 }
             }
 
+            for (var distance = stepDistance; distance <= maxDistance; distance += stepDistance)
+            {
+                if (x <= 0 || x >= _worldWidth || y <= 0 || y >= _worldHeight)
+                    break;
+
+                var cellKey = ComposeSpatialKey((int)(x / SpatialCellSize), (int)(y / SpatialCellSize));
+                if (spatialIndex.TryGetValue(cellKey, out var candidates))
+                {
+                    for (var i = 0; i < candidates.Count; i++)
+                    {
+                        var other = candidates[i];
+                        var location = other.Location;
+
+                        if (Math.Abs(location.Left - startX) < 0.001 && Math.Abs(location.Top - startY) < 0.001)
+                            continue;
+
+                        if (location.Contains(x, y))
+                            return other;
+                    }
+                }
+
+                x += xStep;
+                y += yStep;
+            }
+
             return null;
+        }
+
+        private static long ComposeSpatialKey(int x, int y)
+        {
+            return ((long)x << 32) | (uint)y;
         }
 
         public void Update(double time)
