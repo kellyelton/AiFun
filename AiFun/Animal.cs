@@ -252,6 +252,10 @@ namespace AiFun
             _mapper.Update();
             LookingAngle = NormalizeAngle(curAng + TurnDeltaPerTick);
 
+            var headingRadians = LookingAngle * (Math.PI / 180.0);
+            XVelocity = Math.Cos(headingRadians);
+            YVelocity = Math.Sin(headingRadians);
+
             var curLocation = Location;
             this.UpdateLocation(time);
             var distanceTraveled = DistanceBetweenTwoPoints(curLocation.TopLeft, Location.TopLeft);
@@ -372,12 +376,8 @@ namespace AiFun
             _mapper.MapInputNormalizedToUnit(x => x.DistanceToFocusingObject, 0, Int32.MaxValue);
 
             // Output audit:
-            // X/Y velocity: directional vector component -> [-1,1]
-            _mapper.MapOutputDenormalizedFromSignedUnit(x => x.XVelocity, -1, 1);
-            _mapper.MapOutputDenormalizedFromSignedUnit(x => x.YVelocity, -1, 1);
-
-            // Speed: allow stop and slow movement, but no negative speed -> [0,0.25]
-            _mapper.MapOutputDenormalizedFromSignedUnit(x => x.Speed, 0, 0.25);
+            // Speed: allow stop and slow movement, but with enough upper range to be visible -> [0,20]
+            _mapper.MapOutputDenormalizedFromSignedUnit(x => x.Speed, 0, 20);
 
             // TurnDeltaPerTick: relative heading change per tick -> [-10,+10] degrees
             _mapper.MapOutputDenormalizedFromSignedUnit(x => x.TurnDeltaPerTick, -10, 10);
