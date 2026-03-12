@@ -125,7 +125,7 @@ namespace AiFun
         public static double SetToRandom(this double num, double first, double second, double bias)
         {
             var n = _rnd.NextDouble();
-            if (n >= bias)
+            if (n < bias)
             {
                 num = _rnd.NextDouble();
                 return num;
