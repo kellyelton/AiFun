@@ -243,9 +243,9 @@ namespace AiFun
             DistanceTraveled += Math.Abs(distanceTraveled);
             DeltaTurn += Math.Abs(curAng - LookingAngle);
             //var distanceTraveled = Math.Sqrt(Math.Pow((Left - curleft), 2) + Math.Pow((Top - curtop), 2));
-            AvailableEnergy -= (distanceTraveled * MovementEfficency) * 10;
+            AvailableEnergy -= (distanceTraveled * MovementEfficency) * _eco.MovementEnergyCostMultiplier;
             // Just basic life enegry loss shit
-            AvailableEnergy -= 100;
+            AvailableEnergy -= _eco.BaseEnergyDrainPerSecond * time;
             //if (distanceTraveled < 1)
             //{
             //    AvailableEnergy -= 100;
@@ -260,9 +260,9 @@ namespace AiFun
             foreach (var other in Touching)
             {
                 // don't worry about inanimate objects right now
-                if ((other is AnimateObject) == false) return;
+                if ((other is AnimateObject) == false) continue;
                 // If not an animal, don't worry about it now
-                if ((other is Animal) == false) return;
+                if ((other is Animal) == false) continue;
 
                 var o = other as Animal;
                 o.Touching.Remove(this);
@@ -342,7 +342,7 @@ namespace AiFun
             //_mapper.MapInputNormalized(x => x.Left, 0, 2000);
             //_mapper.MapInputNormalized(x => x.Top, 0, 2000);
             //_mapper.MapInput(x => x.Speed);
-            _mapper.MapInput(x => x.AvailableEnergy);
+            _mapper.MapInput(x => x.AvailableEnergy, x => x.Clamp(0, 10000).Normalize(0, 10000));
             _mapper.MapInputNormalized(x => x.LookingAngle, 0, 360);
             _mapper.MapInput(x => x.IsFocusingOnObject);
             _mapper.MapInputNormalized(x => x.DistanceToFocusingObject, 0, Int32.MaxValue);

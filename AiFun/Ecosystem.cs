@@ -17,6 +17,118 @@ namespace AiFun
     {
         public ObservableCollection<AnimateObject> AnimateObjects { get; set; }
 
+        public int InitialPopulation
+        {
+            get { return _initialPopulation; }
+            set
+            {
+                if (value == _initialPopulation) return;
+                _initialPopulation = Math.Max(2, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public int ElitePopulation
+        {
+            get { return _elitePopulation; }
+            set
+            {
+                if (value == _elitePopulation) return;
+                _elitePopulation = Math.Max(0, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public int RandomPopulation
+        {
+            get { return _randomPopulation; }
+            set
+            {
+                if (value == _randomPopulation) return;
+                _randomPopulation = Math.Max(0, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public double BaseEnergyDrainPerSecond
+        {
+            get { return _baseEnergyDrainPerSecond; }
+            set
+            {
+                if (value.Equals(_baseEnergyDrainPerSecond)) return;
+                _baseEnergyDrainPerSecond = Math.Max(0, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public double MovementEnergyCostMultiplier
+        {
+            get { return _movementEnergyCostMultiplier; }
+            set
+            {
+                if (value.Equals(_movementEnergyCostMultiplier)) return;
+                _movementEnergyCostMultiplier = Math.Max(0, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public double PregnancyDurationSeconds
+        {
+            get { return _pregnancyDurationSeconds; }
+            set
+            {
+                if (value.Equals(_pregnancyDurationSeconds)) return;
+                _pregnancyDurationSeconds = Math.Max(0.5, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public double CorpseDecaySeconds
+        {
+            get { return _corpseDecaySeconds; }
+            set
+            {
+                if (value.Equals(_corpseDecaySeconds)) return;
+                _corpseDecaySeconds = Math.Max(0.5, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public int AliveCount
+        {
+            get { return AnimateObjects.OfType<Animal>().Count(); }
+        }
+
+        public int DeadCount
+        {
+            get { return _deadObjects.OfType<Animal>().Count(); }
+        }
+
+        public int PregnantCount
+        {
+            get { return AnimateObjects.OfType<Animal>().Count(x => x.IsPregnant); }
+        }
+
+        public double AverageEnergy
+        {
+            get
+            {
+                var animals = AnimateObjects.OfType<Animal>().ToList();
+                if (animals.Count == 0) return 0;
+                return animals.Average(x => x.AvailableEnergy);
+            }
+        }
+
+        public double AverageSpeed
+        {
+            get
+            {
+                var animals = AnimateObjects.OfType<Animal>().ToList();
+                if (animals.Count == 0) return 0;
+                return animals.Average(x => Math.Sqrt((x.XVelocity * x.XVelocity) + (x.YVelocity * x.YVelocity)) * x.Speed);
+            }
+        }
+
         public int GenerationCount
         {
             get { return _generationCount; }
@@ -35,6 +147,13 @@ namespace AiFun
         private double _worldWidth;
         private double _worldHeight;
         private int _generationCount;
+        private int _initialPopulation = 100;
+        private int _elitePopulation = 75;
+        private int _randomPopulation = 25;
+        private double _baseEnergyDrainPerSecond = 100;
+        private double _movementEnergyCostMultiplier = 10;
+        private double _pregnancyDurationSeconds = 5;
+        private double _corpseDecaySeconds = 10;
 
 
         public Ecosystem(double width, double height)
@@ -43,6 +162,7 @@ namespace AiFun
             _worldHeight = height;
             AnimateObjects = new ObservableCollection<AnimateObject>();
             _deadObjects = new List<AnimateObject>();
+            AnimateObjects.CollectionChanged += (sender, args) => RaiseSummaryPropertyChanged();
         }
 
         public void Create<T>(T obj) where T : AnimateObject
@@ -53,11 +173,13 @@ namespace AiFun
         public void Reset()
         {
             AnimateObjects.Clear();
-            for (var i = 0; i < 100; i++)
+            _deadObjects.Clear();
+            for (var i = 0; i < InitialPopulation; i++)
             {
                 var an = new Animal(this);
                 AnimateObjects.Add(an);
             }
+            RaiseSummaryPropertyChanged();
         }
 
         public void NewGeneration()
@@ -71,80 +193,56 @@ namespace AiFun
                 .ThenByDescending(x => x.BabiesCreated)
                 .Take(2)
                 .ToList();
+            if (bestOrder.Count < 2)
+            {
+                Reset();
+                return;
+            }
+
             var a1 = bestOrder[0];
             var a2 = bestOrder[1];
             AnimateObjects.Clear();
             _deadObjects.Clear();
             // Calculate da best guys and merge em
-            for (var i = 0; i < 75; i++)
+            for (var i = 0; i < ElitePopulation; i++)
             {
                 var an = new Animal(this, a1, a2);
                 AnimateObjects.Add(an);
             }
-            for (var i = 0; i < 25; i++)
+            for (var i = 0; i < RandomPopulation; i++)
             {
                 var an = new Animal(this);
                 AnimateObjects.Add(an);
             }
             GenerationCount++;
+            RaiseSummaryPropertyChanged();
         }
 
         public Object ObjectAlongLine(double angle, Point start)
         {
-            var xSign = 0;
-            var ySign = 0;
+            var radians = angle * (Math.PI / 180.0);
+            var xDelta = Math.Cos(radians);
+            var yDelta = Math.Sin(radians);
+            var maxDistance = Math.Max(_worldWidth, _worldHeight);
 
-            var checkList = new List<AnimateObject>();
-            if (angle <= 90)
+            for (var distance = 5.0; distance <= maxDistance; distance += 5.0)
             {
-                xSign = 1;
-                ySign = -1;
-                checkList = AnimateObjects
-                    .Where(x => x.Location.Left >= start.X)
-                    .Where(x => x.Location.Top <= start.Y).ToList();
-            }
-            else if (angle > 90 && angle <= 180)
-            {
-                xSign = 1;
-                ySign = 1;
-                checkList = AnimateObjects
-                    .Where(x => x.Location.Left >= start.X)
-                    .Where(x => x.Location.Top >= start.Y).ToList();
-            }
-            else if (angle > 180 && angle <= 270)
-            {
-                xSign = -1;
-                ySign = 1;
-                checkList = AnimateObjects
-                    .Where(x => x.Location.Left <= start.X)
-                    .Where(x => x.Location.Top >= start.Y).ToList();
-            }
-            else if (angle > 270 && angle <= 360)
-            {
-                xSign = -1;
-                ySign = -1;
-                checkList = AnimateObjects
-                    .Where(x => x.Location.Left <= start.X)
-                    .Where(x => x.Location.Top <= start.Y).ToList();
-            }
+                var x = start.X + (xDelta * distance);
+                var y = start.Y + (yDelta * distance);
 
-            {
-                var min = xSign == 1 ? _worldWidth : 0;
-                double x = start.X;
-                double y = start.Y;
-                while (true)
+                if (x <= 0 || x >= _worldWidth || y <= 0 || y >= _worldHeight)
+                    break;
+
+                foreach (var other in AnimateObjects)
                 {
-                    x += (xSign * 5);
-                    if (x <= 0 || x >= _worldWidth) break;
-                    y = Math.Sin(angle);
+                    if (Math.Abs(other.Location.Left - start.X) < 0.001 && Math.Abs(other.Location.Top - start.Y) < 0.001)
+                        continue;
 
-                    // Only check ones that fall in the proper coords
-                    foreach (var other in checkList)
-                    {
-                        if (other.Location.Contains(x, y)) return other;
-                    }
+                    if (other.Location.Contains(x, y))
+                        return other;
                 }
             }
+
             return null;
         }
 
@@ -152,7 +250,7 @@ namespace AiFun
         {
             foreach (var an in AnimateObjects.ToList())
             {
-                an.Update(60);
+                an.Update(time);
                 if (an is Animal)
                 {
                     if (an.Location.Left <= 0 || an.Location.Top <= 0 || an.Location.Left >= _worldWidth || an.Location.Top >= _worldHeight)
@@ -163,13 +261,13 @@ namespace AiFun
                         continue;
                     }
                     var anim = an as Animal;
-                    if (anim.IsPregnant && anim.TimeImpregnated < System.DateTime.Now.AddSeconds(-5) && anim.IsDead == false)
+                    if (anim.IsPregnant && anim.TimeImpregnated < System.DateTime.Now.AddSeconds(-PregnancyDurationSeconds) && anim.IsDead == false)
                     {
                         Trace.WriteLine("Popped a baby");
                         AnimateObjects.Add(anim.PopBaby());
                     }
 
-                    if (anim.IsDead && anim.TimeOfDeath < System.DateTime.Now.AddSeconds(-10))
+                    if (anim.IsDead && anim.TimeOfDeath < System.DateTime.Now.AddSeconds(-CorpseDecaySeconds))
                     {
                         Trace.WriteLine("Disposed of the body");
                         AnimateObjects.Remove(anim);
@@ -211,7 +309,19 @@ namespace AiFun
             if (AnimateObjects.Count == 0)
             {
                 NewGeneration();
+                return;
             }
+
+            RaiseSummaryPropertyChanged();
+        }
+
+        private void RaiseSummaryPropertyChanged()
+        {
+            OnPropertyChanged(nameof(AliveCount));
+            OnPropertyChanged(nameof(DeadCount));
+            OnPropertyChanged(nameof(PregnantCount));
+            OnPropertyChanged(nameof(AverageEnergy));
+            OnPropertyChanged(nameof(AverageSpeed));
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

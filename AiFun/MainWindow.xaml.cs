@@ -22,8 +22,44 @@ namespace AiFun
             }
         }
 
+        public double TickMilliseconds
+        {
+            get { return _tickMilliseconds; }
+            set
+            {
+                var newValue = Math.Max(10, value);
+                if (newValue.Equals(_tickMilliseconds)) return;
+                _tickMilliseconds = newValue;
+                _timer.Interval = TimeSpan.FromMilliseconds(_tickMilliseconds);
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(SimulationDeltaSeconds));
+            }
+        }
+
+        public double SimulationDeltaSeconds
+        {
+            get { return TickMilliseconds / 1000.0; }
+        }
+
+        public bool IsPaused
+        {
+            get { return _isPaused; }
+            set
+            {
+                if (value == _isPaused) return;
+                _isPaused = value;
+                if (_isPaused)
+                    _timer.Stop();
+                else
+                    _timer.Start();
+                OnPropertyChanged();
+            }
+        }
+
         private DispatcherTimer _timer;
         private Ecosystem _ecosystem;
+        private double _tickMilliseconds = 60;
+        private bool _isPaused;
 
         public MainWindow()
         {
@@ -32,7 +68,7 @@ namespace AiFun
 
             this.Loaded += OnLoaded;
 
-            _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(60), DispatcherPriority.Render, OnTick, Dispatcher);
+            _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(_tickMilliseconds), DispatcherPriority.Render, OnTick, Dispatcher);
         }
 
         private void OnLoaded(object sender, RoutedEventArgs routedEventArgs)
@@ -54,11 +90,30 @@ namespace AiFun
             {
                 Ecosystem.NewGeneration();
             }
+            else if (keyEventArgs.Key == Key.Space)
+            {
+                IsPaused = !IsPaused;
+            }
         }
 
         private void OnTick(object sender, EventArgs e)
         {
-            Ecosystem.Update(60);
+            Ecosystem.Update(SimulationDeltaSeconds);
+        }
+
+        private void OnResetClick(object sender, RoutedEventArgs e)
+        {
+            Ecosystem.Reset();
+        }
+
+        private void OnNextGenerationClick(object sender, RoutedEventArgs e)
+        {
+            Ecosystem.NewGeneration();
+        }
+
+        private void OnPauseResumeClick(object sender, RoutedEventArgs e)
+        {
+            IsPaused = !IsPaused;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

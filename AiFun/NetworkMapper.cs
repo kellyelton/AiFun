@@ -40,7 +40,7 @@ namespace AiFun
 
         public void Update()
         {
-            var invals = _inmaps.Select(x=>x.Value.GetRealValue()).ToArray();
+            var invals = _inmaps.Select(x => x.Value.GetValue()).ToArray();
             //var outvals = new double[_outmaps.Count];
             var ins = new BasicMLData(invals, false);
             var o = Network.Compute(ins);
