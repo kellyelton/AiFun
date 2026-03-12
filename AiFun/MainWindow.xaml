@@ -18,7 +18,7 @@
                         </LineArrow>-->
                         <!-- triangle instead of LineArrow -->
                         <Polygon Fill="#FFF4F4F5" Height="10" Width="10" Stroke="#FF027602" VerticalAlignment="Top" Points="0,0 10,5 0,10" StrokeThickness="1"/>
-                        <Ellipse Width="2" Height="2" Fill="Red" StrokeThickness="0" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                        <Ellipse Width="2" Height="2" Fill="#FFE53935" StrokeThickness="0" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,-1,0"/>
                     </Grid>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
