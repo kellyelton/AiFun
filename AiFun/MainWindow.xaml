@@ -71,96 +71,331 @@
         <aiFun:GenerationGraphControl x:Name="GenerationGraph"
             HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="8" Panel.ZIndex="10"/>
 
-        <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8" Padding="8" Background="#AAFFFFFF" CornerRadius="4" Panel.ZIndex="10">
-            <StackPanel Width="280">
-                <TextBlock FontWeight="Bold" Margin="0,0,0,6" Text="Simulation Controls"/>
+        <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6" Padding="0" CornerRadius="6" Panel.ZIndex="10"
+                Background="#DD1a1a2e" BorderBrush="#40ffffff" BorderThickness="1">
+            <Border.Resources>
+                <!-- HUD text style -->
+                <Style x:Key="HudLabel" TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="#99ffffff"/>
+                    <Setter Property="FontFamily" Value="Consolas"/>
+                    <Setter Property="FontSize" Value="11"/>
+                </Style>
+                <Style x:Key="HudValue" TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="#e0e0e0"/>
+                    <Setter Property="FontFamily" Value="Consolas"/>
+                    <Setter Property="FontSize" Value="11"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="HorizontalAlignment" Value="Right"/>
+                </Style>
+                <Style x:Key="HudSection" TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="#80c0ff"/>
+                    <Setter Property="FontFamily" Value="Consolas"/>
+                    <Setter Property="FontSize" Value="10"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </Style>
+                <!-- Custom slim slider -->
+                <Style x:Key="HudSlider" TargetType="Slider">
+                    <Setter Property="Margin" Value="0,2,0,4"/>
+                    <Setter Property="Height" Value="14"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Slider">
+                                <Grid VerticalAlignment="Center">
+                                    <!-- Track background -->
+                                    <Border Height="3" CornerRadius="1.5" Background="#25ffffff"/>
+                                    <Track x:Name="PART_Track">
+                                        <Track.DecreaseRepeatButton>
+                                            <RepeatButton Command="Slider.DecreaseLarge">
+                                                <RepeatButton.Template>
+                                                    <ControlTemplate TargetType="RepeatButton">
+                                                        <Border Height="3" CornerRadius="1.5" Background="#6090cc"/>
+                                                    </ControlTemplate>
+                                                </RepeatButton.Template>
+                                            </RepeatButton>
+                                        </Track.DecreaseRepeatButton>
+                                        <Track.IncreaseRepeatButton>
+                                            <RepeatButton Command="Slider.IncreaseLarge">
+                                                <RepeatButton.Template>
+                                                    <ControlTemplate TargetType="RepeatButton">
+                                                        <Border Background="Transparent"/>
+                                                    </ControlTemplate>
+                                                </RepeatButton.Template>
+                                            </RepeatButton>
+                                        </Track.IncreaseRepeatButton>
+                                        <Track.Thumb>
+                                            <Thumb>
+                                                <Thumb.Template>
+                                                    <ControlTemplate TargetType="Thumb">
+                                                        <Ellipse Width="10" Height="10" Fill="#a0c4e8" Stroke="#40ffffff" StrokeThickness="1"
+                                                                 x:Name="ThumbDot"/>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="ThumbDot" Property="Fill" Value="#c0d8f0"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsDragging" Value="True">
+                                                                <Setter TargetName="ThumbDot" Property="Fill" Value="#ffffff"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Thumb.Template>
+                                            </Thumb>
+                                        </Track.Thumb>
+                                    </Track>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+                <!-- Custom expander with clean chevron header -->
+                <Style TargetType="Expander">
+                    <Setter Property="Margin" Value="0"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Expander">
+                                <StackPanel>
+                                    <ToggleButton IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                                  Cursor="Hand">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border x:Name="HeaderBorder" Background="Transparent" Padding="8,5">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="{Binding Header, RelativeSource={RelativeSource AncestorType=Expander}}"
+                                                                   FontFamily="Consolas" FontSize="10.5" FontWeight="Bold"
+                                                                   Foreground="#80c0ff" VerticalAlignment="Center"/>
+                                                        <Path x:Name="Arrow" Grid.Column="1" Data="M 0,0 L 4,3.5 L 0,7"
+                                                              Stroke="#60ffffff" StrokeThickness="1.5" VerticalAlignment="Center"
+                                                              RenderTransformOrigin="0.5,0.5">
+                                                            <Path.RenderTransform>
+                                                                <RotateTransform Angle="0"/>
+                                                            </Path.RenderTransform>
+                                                        </Path>
+                                                    </Grid>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="HeaderBorder" Property="Background" Value="#10ffffff"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="Arrow" Property="RenderTransform">
+                                                            <Setter.Value>
+                                                                <RotateTransform Angle="90"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
+                                    <Border x:Name="ContentBorder" Padding="8,2,8,6" Visibility="Collapsed">
+                                        <ContentPresenter/>
+                                    </Border>
+                                </StackPanel>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsExpanded" Value="True">
+                                        <Setter TargetName="ContentBorder" Property="Visibility" Value="Visible"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+                <!-- HUD button -->
+                <Style x:Key="HudButton" TargetType="Button">
+                    <Setter Property="Background" Value="#30ffffff"/>
+                    <Setter Property="Foreground" Value="#cccccc"/>
+                    <Setter Property="FontFamily" Value="Consolas"/>
+                    <Setter Property="FontSize" Value="10.5"/>
+                    <Setter Property="BorderBrush" Value="#40ffffff"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                    <Setter Property="Padding" Value="8,3"/>
+                    <Setter Property="Cursor" Value="Hand"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#50ffffff"/>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter Property="Background" Value="#20ffffff"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+                <!-- HUD checkbox -->
+                <Style x:Key="HudCheck" TargetType="CheckBox">
+                    <Setter Property="Foreground" Value="#99ffffff"/>
+                    <Setter Property="FontFamily" Value="Consolas"/>
+                    <Setter Property="FontSize" Value="11"/>
+                    <Setter Property="Cursor" Value="Hand"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="CheckBox">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border x:Name="Box" Grid.Column="0" Width="14" Height="14"
+                                            CornerRadius="3" Background="#25ffffff" BorderBrush="#40ffffff"
+                                            BorderThickness="1" VerticalAlignment="Center">
+                                        <Path x:Name="Check" Data="M 2,6 L 5.5,9.5 L 11,3"
+                                              Stroke="#a0c4e8" StrokeThickness="1.5"
+                                              Visibility="Collapsed" Margin="-1,-1,0,0"/>
+                                    </Border>
+                                    <ContentPresenter Grid.Column="1" Margin="6,0,0,0"
+                                                      VerticalAlignment="Center"
+                                                      RecognizesAccessKey="True"/>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                                        <Setter TargetName="Box" Property="Background" Value="#306090cc"/>
+                                        <Setter TargetName="Box" Property="BorderBrush" Value="#6090cc"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Box" Property="Background" Value="#35ffffff"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Border.Resources>
+            <StackPanel Width="230">
+                <!-- Stats bar — always visible -->
+                <Border Background="#20ffffff" CornerRadius="6,6,0,0" Padding="8,6">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                            <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource HudLabel}" Text="Gen"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource HudValue}" Text="{Binding Ecosystem.GenerationCount}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource HudLabel}" Text="Alive"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource HudValue}" Text="{Binding Ecosystem.AliveCount}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource HudLabel}" Text="Dead"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource HudValue}" Text="{Binding Ecosystem.DeadCount}"/>
+                        <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource HudLabel}" Text="Pregnant"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource HudValue}" Text="{Binding Ecosystem.PregnantCount}"/>
+                        <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource HudLabel}" Text="Food"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource HudValue}" Text="{Binding Ecosystem.FoodCount}"/>
+                        <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource HudLabel}" Text="Diversity"/>
+                        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource HudValue}" Text="{Binding Ecosystem.GeneticDiversity, StringFormat={}{0:F0}%}"/>
+                        <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource HudLabel}" Text="Avg Energy"/>
+                        <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource HudValue}" Text="{Binding Ecosystem.AverageEnergy, StringFormat={}{0:F0}}"/>
+                        <TextBlock Grid.Row="7" Grid.Column="0" Style="{StaticResource HudLabel}" Text="Avg Speed"/>
+                        <TextBlock Grid.Row="7" Grid.Column="1" Style="{StaticResource HudValue}" Text="{Binding Ecosystem.AverageSpeed, StringFormat={}{0:F2}}"/>
+                        <TextBlock Grid.Row="8" Grid.Column="0" Style="{StaticResource HudLabel}" Text="Tick"/>
+                        <TextBlock Grid.Row="8" Grid.Column="1" Style="{StaticResource HudValue}" Text="{Binding TickMilliseconds, StringFormat={}{0:F0}ms}"/>
+                    </Grid>
+                </Border>
 
-                <UniformGrid Columns="2" Margin="0,0,0,8">
-                    <TextBlock Text="Generation"/>
-                    <TextBlock Text="{Binding Ecosystem.GenerationCount}" HorizontalAlignment="Right"/>
-                    <TextBlock Text="Alive"/>
-                    <TextBlock Text="{Binding Ecosystem.AliveCount}" HorizontalAlignment="Right"/>
-                    <TextBlock Text="Dead"/>
-                    <TextBlock Text="{Binding Ecosystem.DeadCount}" HorizontalAlignment="Right"/>
-                    <TextBlock Text="Pregnant"/>
-                    <TextBlock Text="{Binding Ecosystem.PregnantCount}" HorizontalAlignment="Right"/>
-                    <TextBlock Text="Food"/>
-                    <TextBlock Text="{Binding Ecosystem.FoodCount}" HorizontalAlignment="Right"/>
-                    <TextBlock Text="Diversity"/>
-                    <TextBlock Text="{Binding Ecosystem.GeneticDiversity, StringFormat={}{0:F0}%}" HorizontalAlignment="Right"/>
-                    <TextBlock Text="Avg Energy"/>
-                    <TextBlock Text="{Binding Ecosystem.AverageEnergy, StringFormat={}{0:F0}}" HorizontalAlignment="Right"/>
-                    <TextBlock Text="Avg Speed"/>
-                    <TextBlock Text="{Binding Ecosystem.AverageSpeed, StringFormat={}{0:F2}}" HorizontalAlignment="Right"/>
-                    <TextBlock Text="Tick (ms)"/>
-                    <TextBlock Text="{Binding TickMilliseconds, StringFormat={}{0:F0}}" HorizontalAlignment="Right"/>
+                <!-- Separator -->
+                <Rectangle Height="1" Fill="#20ffffff"/>
+
+                <!-- Speed section -->
+                <Expander Header="SPEED" IsExpanded="True" Padding="8,4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="Tick Interval"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="16" Maximum="200" Value="{Binding TickMilliseconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="Steps Per Frame"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="500" Value="{Binding StepsPerFrame, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Expander>
+
+                <Rectangle Height="1" Fill="#20ffffff"/>
+
+                <!-- Population section -->
+                <Expander Header="POPULATION" IsExpanded="False" Padding="8,4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="Initial Population"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="10" Maximum="250" Value="{Binding Ecosystem.InitialPopulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="Elite Offspring"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="0" Maximum="250" Value="{Binding Ecosystem.ElitePopulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="Random Offspring"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="0" Maximum="250" Value="{Binding Ecosystem.RandomPopulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.TopBreeders, StringFormat='Top Breeders ({0})'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="2" Maximum="50" Value="{Binding Ecosystem.TopBreeders, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.MutationRate, StringFormat='Mutation Rate ({0:P1})'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="0.001" Maximum="0.10" Value="{Binding Ecosystem.MutationRate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.001"/>
+                    </StackPanel>
+                </Expander>
+
+                <Rectangle Height="1" Fill="#20ffffff"/>
+
+                <!-- Energy / Life section -->
+                <Expander Header="ENERGY &amp; LIFE" IsExpanded="False" Padding="8,4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="Base Energy Drain"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="10" Maximum="500" Value="{Binding Ecosystem.BaseEnergyDrainPerSecond, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="Movement Cost"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="50" Value="{Binding Ecosystem.MovementEnergyCostMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="Pregnancy (s)"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="20" Value="{Binding Ecosystem.PregnancyDurationSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="Corpse Decay (s)"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="30" Value="{Binding Ecosystem.CorpseDecaySeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Expander>
+
+                <Rectangle Height="1" Fill="#20ffffff"/>
+
+                <!-- Vision section -->
+                <Expander Header="VISION" IsExpanded="False" Padding="8,4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="Max Vision Distance"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="10" Maximum="600" Value="{Binding Ecosystem.MaxVisionDistance, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="Vision Energy Cost"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="0" Maximum="5" Value="{Binding Ecosystem.VisionEnergyCostMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.1"/>
+                        <CheckBox Style="{StaticResource HudCheck}" Margin="0,4,0,0" Content="Show Vision Rays (V)"
+                                  IsChecked="{Binding ShowVisionRays, Mode=TwoWay}"/>
+                    </StackPanel>
+                </Expander>
+
+                <Rectangle Height="1" Fill="#20ffffff"/>
+
+                <!-- Food section -->
+                <Expander Header="FOOD" IsExpanded="False" Padding="8,4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.FoodTargetCount, StringFormat='Food Count ({0})'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="0" Maximum="500" Value="{Binding Ecosystem.FoodTargetCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.FoodMinStartEnergy, StringFormat='Min Start Energy ({0:F0})'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="200" Value="{Binding Ecosystem.FoodMinStartEnergy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.FoodMaxEnergy, StringFormat='Max Energy ({0:F0})'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="50" Maximum="2000" Value="{Binding Ecosystem.FoodMaxEnergy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.FoodGrowthRate, StringFormat='Growth Rate ({0:F1}/s)'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="50" Value="{Binding Ecosystem.FoodGrowthRate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.FoodBiteSize, StringFormat='Bite Size ({0:F0})'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="10" Maximum="500" Value="{Binding Ecosystem.FoodBiteSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Expander>
+
+                <Rectangle Height="1" Fill="#20ffffff"/>
+
+                <!-- Action buttons -->
+                <UniformGrid Columns="3" Margin="8,6,8,8">
+                    <Button Style="{StaticResource HudButton}" Content="Reset" Margin="0,0,3,0" Click="OnResetClick"/>
+                    <Button Style="{StaticResource HudButton}" Content="Next Gen" Margin="1.5,0" Click="OnNextGenerationClick"/>
+                    <Button Style="{StaticResource HudButton}" Content="Pause" Margin="3,0,0,0" Click="OnPauseResumeClick"/>
                 </UniformGrid>
-
-                <TextBlock Text="Tick Interval"/>
-                <Slider Minimum="16" Maximum="200" Value="{Binding TickMilliseconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="Steps Per Frame"/>
-                <Slider Minimum="1" Maximum="500" Value="{Binding StepsPerFrame, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="Initial Population"/>
-                <Slider Minimum="10" Maximum="250" Value="{Binding Ecosystem.InitialPopulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="Elite Offspring"/>
-                <Slider Minimum="0" Maximum="250" Value="{Binding Ecosystem.ElitePopulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="Random Offspring"/>
-                <Slider Minimum="0" Maximum="250" Value="{Binding Ecosystem.RandomPopulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="Base Energy Drain"/>
-                <Slider Minimum="10" Maximum="500" Value="{Binding Ecosystem.BaseEnergyDrainPerSecond, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="Movement Cost"/>
-                <Slider Minimum="1" Maximum="50" Value="{Binding Ecosystem.MovementEnergyCostMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="Pregnancy (s)"/>
-                <Slider Minimum="1" Maximum="20" Value="{Binding Ecosystem.PregnancyDurationSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="Corpse Decay (s)"/>
-                <Slider Minimum="1" Maximum="30" Value="{Binding Ecosystem.CorpseDecaySeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="Max Vision Distance"/>
-                <Slider Minimum="10" Maximum="600" Value="{Binding Ecosystem.MaxVisionDistance, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="Vision Energy Cost"/>
-                <Slider Minimum="0" Maximum="5" Value="{Binding Ecosystem.VisionEnergyCostMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.1"/>
-
-                <TextBlock Margin="0,6,0,0" Text="{Binding Ecosystem.TopBreeders, StringFormat='Top Breeders ({0})'}"/>
-                <Slider Minimum="2" Maximum="50" Value="{Binding Ecosystem.TopBreeders, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
-
-                <TextBlock Margin="0,6,0,0" Text="{Binding Ecosystem.MutationRate, StringFormat='Mutation Rate ({0:P1})'}"/>
-                <Slider Minimum="0.001" Maximum="0.10" Value="{Binding Ecosystem.MutationRate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.001"/>
-
-                <!-- Food Controls -->
-                <TextBlock FontWeight="Bold" Margin="0,12,0,6" Text="Food"/>
-
-                <TextBlock Margin="0,6,0,0" Text="{Binding Ecosystem.FoodTargetCount, StringFormat='Food Count ({0})'}"/>
-                <Slider Minimum="0" Maximum="500" Value="{Binding Ecosystem.FoodTargetCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
-
-                <TextBlock Margin="0,6,0,0" Text="{Binding Ecosystem.FoodMinStartEnergy, StringFormat='Min Start Energy ({0:F0})'}"/>
-                <Slider Minimum="1" Maximum="200" Value="{Binding Ecosystem.FoodMinStartEnergy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="{Binding Ecosystem.FoodMaxEnergy, StringFormat='Max Energy ({0:F0})'}"/>
-                <Slider Minimum="50" Maximum="2000" Value="{Binding Ecosystem.FoodMaxEnergy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="{Binding Ecosystem.FoodGrowthRate, StringFormat='Growth Rate ({0:F1}/s)'}"/>
-                <Slider Minimum="1" Maximum="50" Value="{Binding Ecosystem.FoodGrowthRate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <TextBlock Margin="0,6,0,0" Text="{Binding Ecosystem.FoodBiteSize, StringFormat='Bite Size ({0:F0})'}"/>
-                <Slider Minimum="10" Maximum="500" Value="{Binding Ecosystem.FoodBiteSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <CheckBox Margin="0,8,0,0" Content="Show Vision Rays (V)"
-                          IsChecked="{Binding ShowVisionRays, Mode=TwoWay}"/>
-
-                <WrapPanel Margin="0,8,0,0">
-                    <Button Content="Reset (F5)" Width="85" Margin="0,0,4,0" Click="OnResetClick"/>
-                    <Button Content="Next Gen (G)" Width="95" Margin="0,0,4,0" Click="OnNextGenerationClick"/>
-                    <Button Content="Pause/Resume (Space)" Width="130" Click="OnPauseResumeClick"/>
-                </WrapPanel>
             </StackPanel>
         </Border>
     </Grid>
