@@ -383,11 +383,14 @@ namespace AiFun
 
         internal Animal(Ecosystem eco, Animal mother, FNData[] fatherBrain,
             double fatherMovEff, double fatherVision,
-            double fatherPregnancyGene, double fatherColorR, double fatherColorG, double fatherColorB)
+            double fatherPregnancyGene, double fatherColorR, double fatherColorG, double fatherColorB,
+            double pregnancyDuration = 0)
         {
             _eco = eco;
             _born = eco.SimulationTime;
-            AvailableEnergy = _rnd.NextDouble().DenormalizeFromUnit(0, 10000);
+            AvailableEnergy = pregnancyDuration > 0
+                ? pregnancyDuration * eco.PregnancyEnergyCostMultiplier
+                : _rnd.NextDouble().DenormalizeFromUnit(0, 10000);
             Location = new Rect(
                 Math.Clamp(mother.Location.Left + _rnd.Next(-20, 20), 1, _eco.WorldWidth - 1),
                 Math.Clamp(mother.Location.Top + _rnd.Next(-20, 20), 1, _eco.WorldHeight - 1), 5, 5);
@@ -691,9 +694,11 @@ namespace AiFun
 
         public Animal PopBaby()
         {
+            var actualPregnancyDuration = Math.Max(0, Math.Min(_eco.SimulationTime - TimeImpregnated, PregnancyDuration));
             var baby = new Animal(_eco, this, _fatherBrainSnapshot,
                 _fatherMovementEfficency, _fatherVisionDistance,
-                _fatherPregnancyGene, _fatherColorR, _fatherColorG, _fatherColorB);
+                _fatherPregnancyGene, _fatherColorR, _fatherColorG, _fatherColorB,
+                actualPregnancyDuration);
             baby.Origin = AnimalOrigin.Natural;
             _fatherBrainSnapshot = null;
             IsPregnant = false;

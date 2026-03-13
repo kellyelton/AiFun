@@ -60,17 +60,17 @@ public class GeneticPregnancyTests
     // --- Ecosystem parameters: MinPregnancyDuration, MaxPregnancyDuration ---
 
     [Fact]
-    public void MinPregnancyDuration_defaults_to_2()
+    public void MinPregnancyDuration_defaults_to_15()
     {
         var eco = CreateEcosystem();
-        Assert.Equal(2, eco.MinPregnancyDuration);
+        Assert.Equal(15, eco.MinPregnancyDuration);
     }
 
     [Fact]
-    public void MaxPregnancyDuration_defaults_to_20()
+    public void MaxPregnancyDuration_defaults_to_60()
     {
         var eco = CreateEcosystem();
-        Assert.Equal(20, eco.MaxPregnancyDuration);
+        Assert.Equal(60, eco.MaxPregnancyDuration);
     }
 
     [Fact]
@@ -255,6 +255,53 @@ public class GeneticPregnancyTests
         // The old PregnancyDurationSeconds should no longer exist as the sole check
         // Instead, the ecosystem should use animal.PregnancyDuration
         Assert.InRange(animal.PregnancyDuration, 1, 100);
+    }
+
+    // --- Baby energy formula ---
+
+    [Fact]
+    public void Baby_receives_energy_equal_to_pregnancyDuration_times_costMultiplier()
+    {
+        var eco = CreateEcosystem();
+        eco.MinPregnancyDuration = 10;
+        eco.MaxPregnancyDuration = 10;
+        eco.PregnancyEnergyCostMultiplier = 75;
+        eco.BaseEnergyDrainPerSecond = 0;
+        eco.MovementEnergyCostMultiplier = 0;
+        eco.VisionEnergyCostMultiplier = 0;
+
+        var female = CreateAnimalAt(eco, 500, 500);
+        var male = CreateAnimalAt(eco, 500, 500);
+        female.AvailableEnergy = 100000;
+        male.AvailableEnergy = 100000;
+        female.BreedDesire = 0.9;
+        female.EatDesire = 0.1;
+        eco.AnimateObjects.Clear();
+        eco.AnimateObjects.Add(female);
+        eco.AnimateObjects.Add(male);
+
+        if (!female.IsFemale || !male.IsMale) return;
+
+        female.Touching.Add(male);
+        female.HandleTouching();
+
+        if (!female.IsPregnant) return;
+
+        // Advance time past pregnancy duration (10s) with small ticks
+        for (int i = 0; i < 120; i++) // 120 * 0.1 = 12 seconds, enough to trigger birth
+            eco.Update(0.1);
+
+        // Find the baby (any animal that isn't the original female or male)
+        var baby = eco.AnimateObjects.OfType<Animal>()
+            .FirstOrDefault(a => a != female && a != male);
+
+        Assert.NotNull(baby);
+
+        // Baby energy should be actualDuration * PregnancyEnergyCostMultiplier
+        // With clamping, actualDuration <= PregnancyDuration = 10
+        // Expected = 10 * 75 = 750
+        var expectedEnergy = 10.0 * 75.0;
+        Assert.InRange(baby.AvailableEnergy, expectedEnergy - 80, expectedEnergy + 1);
     }
 
     // --- GeneticDiversity includes PregnancyGene ---

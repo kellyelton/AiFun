@@ -367,8 +367,8 @@ namespace AiFun
         private int _randomPopulation = 10;
         private double _baseEnergyDrainPerSecond = 30;
         private double _movementEnergyCostMultiplier = 3;
-        private double _minPregnancyDuration = 2;
-        private double _maxPregnancyDuration = 20;
+        private double _minPregnancyDuration = 15;
+        private double _maxPregnancyDuration = 60;
         private double _pregnancyEnergyCostMultiplier = 50;
         private double _corpseDecaySeconds = 10;
         private double _maxVisionDistance = 300;
