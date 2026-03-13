@@ -355,8 +355,8 @@ namespace AiFun
         private int _initialPopulation = 100;
         private int _elitePopulation = 75;
         private int _randomPopulation = 25;
-        private double _baseEnergyDrainPerSecond = 100;
-        private double _movementEnergyCostMultiplier = 10;
+        private double _baseEnergyDrainPerSecond = 30;
+        private double _movementEnergyCostMultiplier = 3;
         private double _minPregnancyDuration = 2;
         private double _maxPregnancyDuration = 20;
         private double _pregnancyEnergyCostMultiplier = 50;
@@ -368,10 +368,10 @@ namespace AiFun
         private double _mutationRate = 0.03;
         private double _mutationStepSize = 0.1;
         private int _topBreeders = 30;
-        private int _foodTargetCount = 100;
-        private double _foodMinStartEnergy = 50;
+        private int _foodTargetCount = 150;
+        private double _foodMinStartEnergy = 200;
         private double _foodMaxEnergy = 500;
-        private double _foodGrowthRate = 10;
+        private double _foodGrowthRate = 30;
         private double _foodBiteSize = 100;
 
         public double SimulationTime { get; private set; }

@@ -55,27 +55,30 @@ public class CreatureVisualsTests
     }
 
     [Fact]
-    public void Child_color_channel_matches_a_parent_value()
+    public void Child_color_channel_near_parent_value()
     {
         var eco = CreateEcosystem();
-        // Create many children and verify at least some match parent values
-        // (since SetToRandom picks one parent's value, all should match)
+        // With Gaussian trait mutation (Step 9), colors may be slightly
+        // perturbed from parent values. Verify they stay close.
         for (int i = 0; i < 20; i++)
         {
             var parent1 = new Animal(eco);
             var parent2 = new Animal(eco);
             var child = new Animal(eco, parent1, parent2);
 
-            // Each channel should be exactly one of the parent values
-            Assert.True(
-                child.ColorR == parent1.ColorR || child.ColorR == parent2.ColorR,
-                $"Child ColorR {child.ColorR} doesn't match parent1 {parent1.ColorR} or parent2 {parent2.ColorR}");
-            Assert.True(
-                child.ColorG == parent1.ColorG || child.ColorG == parent2.ColorG,
-                $"Child ColorG {child.ColorG} doesn't match parent1 {parent1.ColorG} or parent2 {parent2.ColorG}");
-            Assert.True(
-                child.ColorB == parent1.ColorB || child.ColorB == parent2.ColorB,
-                $"Child ColorB {child.ColorB} doesn't match parent1 {parent1.ColorB} or parent2 {parent2.ColorB}");
+            var minR = Math.Min(parent1.ColorR, parent2.ColorR) - 0.15;
+            var maxR = Math.Max(parent1.ColorR, parent2.ColorR) + 0.15;
+            var minG = Math.Min(parent1.ColorG, parent2.ColorG) - 0.15;
+            var maxG = Math.Max(parent1.ColorG, parent2.ColorG) + 0.15;
+            var minB = Math.Min(parent1.ColorB, parent2.ColorB) - 0.15;
+            var maxB = Math.Max(parent1.ColorB, parent2.ColorB) + 0.15;
+
+            Assert.True(child.ColorR >= minR && child.ColorR <= maxR,
+                $"Child ColorR {child.ColorR} too far from parents {parent1.ColorR}/{parent2.ColorR}");
+            Assert.True(child.ColorG >= minG && child.ColorG <= maxG,
+                $"Child ColorG {child.ColorG} too far from parents {parent1.ColorG}/{parent2.ColorG}");
+            Assert.True(child.ColorB >= minB && child.ColorB <= maxB,
+                $"Child ColorB {child.ColorB} too far from parents {parent1.ColorB}/{parent2.ColorB}");
         }
     }
 

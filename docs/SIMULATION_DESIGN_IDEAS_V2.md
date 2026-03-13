@@ -367,7 +367,7 @@ For a network with ~150 weights (8 inputs, 1 hidden layer of 12, 4 outputs), thi
 ---
 
 ### Step 11: Rebalance Energy Economics
-**Status:** Not started
+**Status:** Done
 **Effort:** Small | **Impact:** 🔥🔥🔥
 
 The current energy budget is hostile to survival. A creature with no vision and zero movement still burns 100 energy/second from base drain alone. Food pellets start at 50 energy and max at 500 — meaning a stationary creature needs to find and eat a full-grown pellet every 5 seconds just to break even. With movement and vision costs on top, the math is deeply unfavorable.
