@@ -172,9 +172,9 @@ namespace AiFun
                 if (RayResults == null || RayResults.Length == 0) return VisionDistance;
                 var center = RayResults[RayResults.Length / 2];
                 // ObjectDistance is inverted: closer = higher
-                // Actual distance = VisionDistance * (1 - ObjectDistance)
-                // When nothing detected, ObjectDistance = 0, so this = VisionDistance (full range)
-                return VisionDistance * (1.0 - center.ObjectDistance);
+                // Actual distance = effectiveVision * (1 - ObjectDistance)
+                // When nothing detected, ObjectDistance = 0, so this = effectiveVision (full effective range)
+                return _effectiveVisionDistance * (1.0 - center.ObjectDistance);
             }
         }
 
@@ -339,6 +339,8 @@ namespace AiFun
         private double _visionDistance;
         private double _eatDesire;
         private double _breedDesire;
+        internal double _effectiveVisionDistance;
+        internal int _activeRayCount;
 
         public Animal(Ecosystem eco)
         {
@@ -428,14 +430,13 @@ namespace AiFun
             //{
             //    AvailableEnergy -= 100;
             //}
-            // Vision energy drain
-            AvailableEnergy -= VisionDistance * _eco.VisionRayCount * _eco.VisionEnergyCostMultiplier * time;
+            // Update vision properties from ray cast (also caches _effectiveVisionDistance / _activeRayCount)
+            UpdateVision();
+            // Vision energy drain — uses cached effective values (speed-vision coupling)
+            AvailableEnergy -= _effectiveVisionDistance * _activeRayCount * _eco.VisionEnergyCostMultiplier * time;
             // Pregnancy energy drain
             if (IsPregnant)
                 AvailableEnergy -= _eco.PregnancyEnergyCostMultiplier * time;
-
-            // Update vision properties from ray cast
-            UpdateVision();
         }
 
         public override void HandleTouching()
@@ -522,8 +523,30 @@ namespace AiFun
             var centerIndex = rayCount / 2;
             Object centerHitObject = null;
 
+            // Speed-vision coupling: cache effective vision distance and active ray count once
+            _effectiveVisionDistance = ComputeEffectiveVisionDistance();
+            _activeRayCount = ComputeActiveRayCount();
+            var effectiveVision = _effectiveVisionDistance;
+            var activeRayCount = _activeRayCount;
+            var pairsDisabled = (rayCount - activeRayCount) / 2;
+
             for (int i = 0; i < rayCount; i++)
             {
+                // Check if this ray is disabled due to speed
+                bool isDisabled = i < pairsDisabled || i >= rayCount - pairsDisabled;
+                if (rayCount == 1) isDisabled = false; // center ray always active
+
+                if (isDisabled)
+                {
+                    RayResults[i] = new RayResult
+                    {
+                        ObjectType = 0,
+                        ObjectDistance = 0,
+                        ObjectEnergy = 0
+                    };
+                    continue;
+                }
+
                 double angleOffset;
                 if (rayCount == 1)
                     angleOffset = 0;
@@ -531,7 +554,7 @@ namespace AiFun
                     angleOffset = -halfFov + (fov * i / (rayCount - 1));
 
                 var rayAngle = NormalizeAngle(LookingAngle + angleOffset);
-                var result = _eco.ObjectAlongLine(rayAngle, Location.TopLeft, VisionDistance);
+                var result = _eco.ObjectAlongLine(rayAngle, Location.TopLeft, effectiveVision);
 
                 double objectType = 0;
                 double objectDistance = 0;
@@ -557,8 +580,8 @@ namespace AiFun
                         break;
                 }
 
-                if (result.HitType != VisionHitType.None && VisionDistance > 0)
-                    objectDistance = 1.0 - (result.Distance / VisionDistance);
+                if (result.HitType != VisionHitType.None && effectiveVision > 0)
+                    objectDistance = 1.0 - (result.Distance / effectiveVision);
 
                 RayResults[i] = new RayResult
                 {
@@ -718,6 +741,51 @@ namespace AiFun
             OnPropertyChanged(nameof(AvailableEnergy));
             OnPropertyChanged(nameof(IsDead));
             OnPropertyChanged(nameof(IsPregnant));
+        }
+
+        private const double MaxSpeed = 20.0;
+        private const double SpeedVisionScalingFactor = 0.75;
+
+        /// <summary>
+        /// Computes effective vision distance based on current speed.
+        /// At full speed, vision is 25% of max. Standing still gives full vision.
+        /// </summary>
+        internal double ComputeEffectiveVisionDistance()
+        {
+            var speedFraction = Math.Clamp(Speed / MaxSpeed, 0, 1);
+            return VisionDistance * (1 - speedFraction * SpeedVisionScalingFactor);
+        }
+
+        /// <summary>
+        /// Computes how many rays are active based on current speed.
+        /// Outermost pairs are disabled first as speed increases.
+        /// Center ray always remains active.
+        /// For 5 rays (2 pairs): thresholds at 0.25 and 0.75 matching design doc.
+        /// Generalizes to any ray count with thresholds evenly spaced from 0.25 to 0.75.
+        /// </summary>
+        internal int ComputeActiveRayCount()
+        {
+            var rayCount = _eco.VisionRayCount;
+            if (rayCount <= 1) return 1;
+
+            var speedFraction = Math.Clamp(Speed / MaxSpeed, 0, 1);
+            var pairs = rayCount / 2; // number of symmetric pairs (excluding center)
+
+            // Thresholds spaced evenly from 0.25 to 0.75
+            int pairsDisabled = 0;
+            for (int p = 0; p < pairs; p++)
+            {
+                double threshold;
+                if (pairs == 1)
+                    threshold = 0.25;
+                else
+                    threshold = 0.25 + p * 0.5 / (pairs - 1);
+
+                if (speedFraction >= threshold)
+                    pairsDisabled = p + 1;
+            }
+
+            return rayCount - 2 * pairsDisabled;
         }
 
         private static double NormalizeAngle(double angle)

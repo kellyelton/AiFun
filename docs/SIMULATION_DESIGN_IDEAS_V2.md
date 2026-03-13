@@ -170,7 +170,7 @@ Currently hidden layers always have `_inmaps.Count` neurons (matching input coun
 ---
 
 ### Step 7: Speed–Vision Coupling
-**Status:** Not started
+**Status:** Done
 **Effort:** Small | **Impact:** 🔥🔥🔥
 
 Creatures moving at full speed should not have perfect long-range, wide-angle vision. In nature, fast movement reduces the ability to process peripheral detail — you get tunnel vision. This step ties speed to both vision range and peripheral ray count, creating a natural "scan mode" (slow, wide vision) vs "chase mode" (fast, narrow vision) trade-off that creatures must evolve around.
