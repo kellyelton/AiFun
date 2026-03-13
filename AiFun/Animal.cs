@@ -77,7 +77,6 @@ namespace AiFun
         public double MovementEfficency { get; private set; }
         public double PregnancyGene { get; private set; }
         public double PregnancyDuration => _eco.MinPregnancyDuration + PregnancyGene * (_eco.MaxPregnancyDuration - _eco.MinPregnancyDuration);
-        public int HiddenNeurons { get; private set; }
         /// <summary>
         /// <![CDATA[< .5 is male, > .5 is female, .5 is both]]>
         /// </summary>
@@ -328,7 +327,6 @@ namespace AiFun
         private double _timeImpregnated;
         private FNData[] _fatherBrainSnapshot;
         private double _fatherMovementEfficency;
-        private int _fatherHiddenNeurons;
         private double _fatherVisionDistance;
         private double _fatherPregnancyGene;
         private double _fatherColorR;
@@ -361,7 +359,6 @@ namespace AiFun
             PregnancyGene = _rnd.NextDouble();
             Sex = _rnd.NextDouble();
             IsPregnant = false;
-            HiddenNeurons = _rnd.Next(0, 5);
             VisionDistance = _rnd.NextDouble().DenormalizeFromUnit(0, _eco.MaxVisionDistance);
             ColorR = _rnd.NextDouble();
             ColorG = _rnd.NextDouble();
@@ -387,7 +384,7 @@ namespace AiFun
         }
 
         internal Animal(Ecosystem eco, Animal mother, FNData[] fatherBrain,
-            double fatherMovEff, int fatherHidden, double fatherVision,
+            double fatherMovEff, double fatherVision,
             double fatherPregnancyGene, double fatherColorR, double fatherColorG, double fatherColorB)
         {
             _eco = eco;
@@ -403,7 +400,7 @@ namespace AiFun
             IsPregnant = false;
             Sex = _rnd.NextDouble();
             Origin = AnimalOrigin.Natural;
-            BreedFromSnapshot(mother, fatherBrain, fatherMovEff, fatherHidden, fatherVision,
+            BreedFromSnapshot(mother, fatherBrain, fatherMovEff, fatherVision,
                 fatherPregnancyGene, fatherColorR, fatherColorG, fatherColorB, SetupNetwork());
         }
 
@@ -621,7 +618,6 @@ namespace AiFun
         {
             _fatherBrainSnapshot = father.Brain.GetFNData().ToArray();
             _fatherMovementEfficency = father.MovementEfficency;
-            _fatherHiddenNeurons = father.HiddenNeurons;
             _fatherVisionDistance = father.VisionDistance;
             _fatherPregnancyGene = father.PregnancyGene;
             _fatherColorR = father.ColorR;
@@ -633,7 +629,7 @@ namespace AiFun
         public Animal PopBaby()
         {
             var baby = new Animal(_eco, this, _fatherBrainSnapshot,
-                _fatherMovementEfficency, _fatherHiddenNeurons, _fatherVisionDistance,
+                _fatherMovementEfficency, _fatherVisionDistance,
                 _fatherPregnancyGene, _fatherColorR, _fatherColorG, _fatherColorB);
             baby.Origin = AnimalOrigin.Natural;
             _fatherBrainSnapshot = null;
@@ -680,13 +676,12 @@ namespace AiFun
             _mapper.MapOutputDenormalizedFromSignedUnit(x => x.EatDesire, 0, 1);
             _mapper.MapOutputDenormalizedFromSignedUnit(x => x.BreedDesire, 0, 1);
 
-            return _mapper.CreateNetwork(HiddenNeurons);
+            return _mapper.CreateNetwork(_eco.HiddenLayerSize);
         }
 
         private void Breed(Animal a1, Animal a2, BasicNetwork net)
         {
             MovementEfficency = MovementEfficency.SetToRandom(a1.MovementEfficency, a2.MovementEfficency);
-            HiddenNeurons = HiddenNeurons.SetToRandom(a1.HiddenNeurons, a2.HiddenNeurons);
             VisionDistance = VisionDistance.SetToRandom(a1.VisionDistance, a2.VisionDistance);
             PregnancyGene = PregnancyGene.SetToRandom(a1.PregnancyGene, a2.PregnancyGene);
             ColorR = ColorR.SetToRandom(a1.ColorR, a2.ColorR);
@@ -700,12 +695,11 @@ namespace AiFun
         }
 
         private void BreedFromSnapshot(Animal mother, FNData[] fatherBrain,
-            double fatherMovEff, int fatherHidden, double fatherVision,
+            double fatherMovEff, double fatherVision,
             double fatherPregnancyGene, double fatherColorR, double fatherColorG, double fatherColorB,
             BasicNetwork net)
         {
             MovementEfficency = MovementEfficency.SetToRandom(mother.MovementEfficency, fatherMovEff);
-            HiddenNeurons = HiddenNeurons.SetToRandom(mother.HiddenNeurons, fatherHidden);
             VisionDistance = VisionDistance.SetToRandom(mother.VisionDistance, fatherVision);
             PregnancyGene = PregnancyGene.SetToRandom(mother.PregnancyGene, fatherPregnancyGene);
             ColorR = ColorR.SetToRandom(mother.ColorR, fatherColorR);
@@ -726,21 +720,7 @@ namespace AiFun
                 var w1 = parent1Weights.FirstOrDefault(x => x.Equals(f));
                 var w2 = parent2Weights.FirstOrDefault(x => x.Equals(f));
 
-                if (w1 == null && w2 == null)
-                {
-                    f.Weight = _rnd.NextDouble().DenormalizeFromUnit(-1, 1);
-                    continue;
-                }
-                if (w1 == null)
-                {
-                    f.Weight = w2.Weight;
-                    continue;
-                }
-                if (w2 == null)
-                {
-                    f.Weight = w1.Weight;
-                    continue;
-                }
+                Debug.Assert(w1 != null && w2 != null, "All networks share identical topology — every weight must exist in both parents");
                 f.Weight = f.Weight.SetToRandom(w1.Weight, w2.Weight, _eco.MutationRate, _eco.MutationStepSize);
             }
             net.SetFNData(fnet);

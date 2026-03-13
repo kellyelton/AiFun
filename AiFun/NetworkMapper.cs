@@ -24,16 +24,11 @@ namespace AiFun
             _outmaps = new Dictionary<int, Map>();
         }
 
-        public BasicNetwork CreateNetwork(int hidden, int maxHiddenSize = 16)
+        public BasicNetwork CreateNetwork(int hiddenLayerSize)
         {
             Network = new BasicNetwork();
             Network.AddLayer(new BasicLayer(_inmaps.Count));
-            var hiddenSize = Math.Min(_inmaps.Count, maxHiddenSize);
-            for(var i = 0;i<hidden;i++)
-            {
-                var layer = new BasicLayer(hiddenSize);
-                Network.AddLayer(layer);
-            }
+            Network.AddLayer(new BasicLayer(hiddenLayerSize));
             Network.AddLayer(new BasicLayer(_outmaps.Count));
             Network.Structure.FinalizeStructure();
             return Network;

@@ -185,6 +185,17 @@ namespace AiFun
             }
         }
 
+        public int HiddenLayerSize
+        {
+            get { return _hiddenLayerSize; }
+            set
+            {
+                if (value == _hiddenLayerSize) return;
+                _hiddenLayerSize = Math.Max(1, value);
+                OnPropertyChanged();
+            }
+        }
+
         public int TopBreeders
         {
             get { return _topBreeders; }
@@ -365,6 +376,7 @@ namespace AiFun
         private double _visionEnergyCostMultiplier = 0.05;
         private int _visionRayCount = 5;
         private double _visionFieldOfView = 120;
+        private int _hiddenLayerSize = 12;
         private double _mutationRate = 0.03;
         private double _mutationStepSize = 0.1;
         private int _topBreeders = 30;

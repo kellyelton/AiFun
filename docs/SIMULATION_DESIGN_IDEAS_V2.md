@@ -33,7 +33,6 @@ Creatures that actively seek food and mates, sustain a population through natura
 | `MovementEfficency` | [0, 1] | Multiplier on movement energy cost |
 | `VisionDistance` | [0, MaxVisionDistance] | How far the single forward ray reaches |
 | `PregnancyGene` | [0, 1] | Maps to gestation duration within ecosystem bounds |
-| `HiddenNeurons` | 0 – 4 | Number of hidden layers (each has 8 neurons) |
 | `Sex` | [0, 1] | <0.5 = male, ≥0.5 = female |
 | `ColorR/G/B` | [0, 1] | Visual phenotype, no functional effect |
 | Neural network weights | [-1, 1] | Per-synapse crossover with mutation |
@@ -442,7 +441,7 @@ Now a creature that lives 10 seconds with 0 babies (fitness: 10,000) is beaten b
 ---
 
 ### Step 13: Fix Hidden Layer Topology
-**Status:** Not started
+**Status:** Done
 **Effort:** Small | **Impact:** 🔥🔥
 
 `HiddenNeurons` (0–4) controls the number of hidden layers, not neurons. Each hidden layer always has `_inmaps.Count` neurons. This creates two problems:

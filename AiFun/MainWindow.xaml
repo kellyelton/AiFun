@@ -343,6 +343,8 @@
                         <Slider Style="{StaticResource HudSlider}" Minimum="0.001" Maximum="0.10" Value="{Binding Ecosystem.MutationRate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.001"/>
                         <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.MutationStepSize, StringFormat='Mutation Step Size ({0:F2})'}"/>
                         <Slider Style="{StaticResource HudSlider}" Minimum="0.01" Maximum="0.5" Value="{Binding Ecosystem.MutationStepSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.01"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.HiddenLayerSize, StringFormat='Hidden Layer Size ({0})'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="32" Value="{Binding Ecosystem.HiddenLayerSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
                     </StackPanel>
                 </Expander>
 
