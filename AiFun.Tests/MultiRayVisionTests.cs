@@ -415,40 +415,6 @@ public class MultiRayVisionTests
         }
     }
 
-    // --- Old properties removed ---
-
-    [Fact]
-    public void VisionRayColor_uses_center_ray_for_display()
-    {
-        var eco = CreateEcosystem();
-        eco.VisionRayCount = 5;
-        var animal = CreateAnimalAt(eco, 1000, 1000);
-        animal.VisionDistance = 50;
-        eco.AnimateObjects.Clear();
-        eco.AnimateObjects.Add(animal);
-        animal.UpdateVision();
-
-        // Should not throw, and should return a valid color
-        var color = animal.VisionRayColor;
-        Assert.NotNull(color);
-    }
-
-    [Fact]
-    public void VisionRayDisplayLength_uses_center_ray()
-    {
-        var eco = CreateEcosystem();
-        eco.VisionRayCount = 5;
-        var animal = CreateAnimalAt(eco, 1000, 1000);
-        animal.VisionDistance = 100;
-        animal.Speed = 0; // ensure full effective vision
-        eco.AnimateObjects.Clear();
-        eco.AnimateObjects.Add(animal);
-        animal.UpdateVision();
-
-        // When nothing detected and speed=0, display length = VisionDistance
-        Assert.Equal(100, animal.VisionRayDisplayLength, precision: 1);
-    }
-
     // --- Zero vision distance ---
 
     [Fact]

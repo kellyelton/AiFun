@@ -510,25 +510,6 @@ public class SpeedVisionCouplingTests
         }
     }
 
-    // --- VisionRayDisplayLength uses effective vision ---
-
-    [Fact]
-    public void VisionRayDisplayLength_reflects_effective_vision_at_speed()
-    {
-        var eco = CreateEcosystem();
-        eco.VisionRayCount = 5;
-        var animal = CreateAnimalAt(eco, 1000, 1000);
-        animal.VisionDistance = 200;
-        animal.Speed = 20; // effectiveVision = 50
-        eco.AnimateObjects.Clear();
-        eco.AnimateObjects.Add(animal);
-
-        animal.UpdateVision();
-
-        // When nothing detected, display length should use effective vision (50), not full (200)
-        Assert.InRange(animal.VisionRayDisplayLength, 45, 55);
-    }
-
     // --- Speed clamping ---
 
     [Fact]

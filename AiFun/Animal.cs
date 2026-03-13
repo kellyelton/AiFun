@@ -112,9 +112,15 @@ namespace AiFun
         public RayResult[] RayResults { get; private set; }
 
         /// <summary>
-        /// Display data for all active vision rays, consumed by the XAML ItemsControl.
+        /// WPF Geometry string for rendering all active vision rays as a single Path element.
+        /// Built lazily in RefreshBindings to avoid per-tick allocation during suppressed steps.
         /// </summary>
-        public RayDisplayItem[] RayDisplayItems { get; private set; } = Array.Empty<RayDisplayItem>();
+        public string VisionRaysGeometry { get; private set; } = "";
+
+        /// <summary>
+        /// Stroke brush for the vision rays — uses center ray's detection color.
+        /// </summary>
+        public string VisionRaysStroke { get; private set; } = "#44888888";
 
         public double EatDesire
         {
@@ -138,20 +144,6 @@ namespace AiFun
             }
         }
 
-        public string VisionRayColor
-        {
-            get
-            {
-                if (RayResults == null || RayResults.Length == 0) return "#44888888";
-                var center = RayResults[RayResults.Length / 2];
-                if (center.ObjectType == 0.25) return "#CCFF4444";      // wall
-                if (center.ObjectType == 1.0) return "#CCFFAA00";       // alive creature
-                if (center.ObjectType == 0.75) return "#CC44CC44";      // dead creature
-                if (center.ObjectType == 0.5) return "#CC00CC00";       // food
-                return "#44888888";
-            }
-        }
-
         /// <summary>
         /// Nose dot color reflecting dominant desire:
         /// Red = eat desire dominant, Yellow = breed desire dominant, Gray = neutral
@@ -168,19 +160,6 @@ namespace AiFun
             }
         }
 
-        public double VisionRayDisplayLength
-        {
-            get
-            {
-                if (VisionDistance <= 0) return 0;
-                if (RayResults == null || RayResults.Length == 0) return VisionDistance;
-                var center = RayResults[RayResults.Length / 2];
-                // ObjectDistance is inverted: closer = higher
-                // Actual distance = effectiveVision * (1 - ObjectDistance)
-                // When nothing detected, ObjectDistance = 0, so this = effectiveVision (full effective range)
-                return _effectiveVisionDistance * (1.0 - center.ObjectDistance);
-            }
-        }
 
         public double IsFocusingOnObject
         {
@@ -623,28 +602,33 @@ namespace AiFun
                     centerHitObject = result.HitObject;
             }
 
-            // Build ray display data for UI rendering
-            BuildRayDisplayItems(rayCount, fov, effectiveVision, pairsDisabled);
-
             // Update FocusingObject from center ray (already computed in loop)
             FocusingObject = centerHitObject;
         }
 
-        private void BuildRayDisplayItems(int rayCount, double fov, double effectiveVision, int pairsDisabled)
+        /// <summary>
+        /// Builds a WPF mini-language geometry string for all active vision rays.
+        /// Each ray is a line from the nose (0,0) to its endpoint at the correct angle/length.
+        /// Called only during RefreshBindings (once per render frame), not every simulation tick.
+        /// </summary>
+        private void BuildVisionRaysGeometry()
         {
-            var halfFov = fov / 2.0;
-            int activeCount = 0;
-
-            // Count active rays first to size the array
-            for (int i = 0; i < rayCount; i++)
+            if (RayResults == null || RayResults.Length == 0 || VisionDistance <= 0)
             {
-                bool isDisabled = i < pairsDisabled || i >= rayCount - pairsDisabled;
-                if (rayCount == 1) isDisabled = false;
-                if (!isDisabled) activeCount++;
+                VisionRaysGeometry = "";
+                VisionRaysStroke = "#44888888";
+                return;
             }
 
-            var items = new RayDisplayItem[activeCount];
-            int idx = 0;
+            var rayCount = _eco.VisionRayCount;
+            var fov = _eco.VisionFieldOfView;
+            var halfFov = fov / 2.0;
+            var effectiveVision = _effectiveVisionDistance;
+            var pairsDisabled = (rayCount - _activeRayCount) / 2;
+
+            var sb = new System.Text.StringBuilder(rayCount * 30);
+            string centerColor = "#44888888";
+
             for (int i = 0; i < rayCount; i++)
             {
                 bool isDisabled = i < pairsDisabled || i >= rayCount - pairsDisabled;
@@ -659,18 +643,27 @@ namespace AiFun
 
                 var ray = RayResults[i];
                 double length = effectiveVision * (1.0 - ray.ObjectDistance);
+                if (length < 1) length = 1;
 
-                string color;
-                if (ray.ObjectType == 0.25) color = "#CCFF4444";       // wall
-                else if (ray.ObjectType == 1.0) color = "#CCFFAA00";   // alive creature
-                else if (ray.ObjectType == 0.75) color = "#CC44CC44";  // dead creature
-                else if (ray.ObjectType == 0.5) color = "#CC00CC00";   // food
-                else color = "#44888888";                               // nothing
+                var radians = angleOffset * (Math.PI / 180.0);
+                var endX = Math.Cos(radians) * length;
+                var endY = Math.Sin(radians) * length;
 
-                items[idx] = new RayDisplayItem { Angle = angleOffset, Length = length, Color = color };
-                idx++;
+                // M 0,0 L endX,endY (move to origin, line to endpoint)
+                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture,
+                    "M 0,0 L {0:F1},{1:F1} ", endX, endY);
+
+                if (i == rayCount / 2)
+                {
+                    if (ray.ObjectType == 0.25) centerColor = "#CCFF4444";
+                    else if (ray.ObjectType == 1.0) centerColor = "#CCFFAA00";
+                    else if (ray.ObjectType == 0.75) centerColor = "#CC44CC44";
+                    else if (ray.ObjectType == 0.5) centerColor = "#CC00CC00";
+                }
             }
-            RayDisplayItems = items;
+
+            VisionRaysGeometry = sb.ToString();
+            VisionRaysStroke = centerColor;
         }
 
         protected bool CanBreed(Animal other)
@@ -809,10 +802,10 @@ namespace AiFun
         internal override void RefreshBindings()
         {
             base.RefreshBindings();
+            BuildVisionRaysGeometry();
             OnPropertyChanged(nameof(LookingAngle));
-            OnPropertyChanged(nameof(VisionRayColor));
-            OnPropertyChanged(nameof(VisionRayDisplayLength));
-            OnPropertyChanged(nameof(RayDisplayItems));
+            OnPropertyChanged(nameof(VisionRaysGeometry));
+            OnPropertyChanged(nameof(VisionRaysStroke));
             OnPropertyChanged(nameof(BodyColor));
             OnPropertyChanged(nameof(StrokeColor));
             OnPropertyChanged(nameof(DesireIndicatorColor));

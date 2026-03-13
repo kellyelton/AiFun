@@ -14,33 +14,14 @@
                 <Canvas.RenderTransform>
                     <RotateTransform Angle="{Binding LookingAngle}" CenterX="5" CenterY="5"/>
                 </Canvas.RenderTransform>
-                <!-- Vision rays — one per active ray, each rotated by its offset angle -->
-                <ItemsControl ItemsSource="{Binding RayDisplayItems}"
-                              Visibility="{Binding DataContext.ShowVisionRays, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVis}}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <Canvas/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type aiFun:RayDisplayItem}">
-                            <Rectangle Width="{Binding Length}" Height="1">
-                                <Rectangle.Fill>
-                                    <SolidColorBrush Color="{Binding Color}"/>
-                                </Rectangle.Fill>
-                                <Rectangle.RenderTransform>
-                                    <RotateTransform Angle="{Binding Angle}" CenterX="0" CenterY="0.5"/>
-                                </Rectangle.RenderTransform>
-                            </Rectangle>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                    <ItemsControl.ItemContainerStyle>
-                        <Style TargetType="ContentPresenter">
-                            <Setter Property="Canvas.Left" Value="10"/>
-                            <Setter Property="Canvas.Top" Value="4.5"/>
-                        </Style>
-                    </ItemsControl.ItemContainerStyle>
-                </ItemsControl>
+                <!-- Vision rays — single Path element drawing all rays as line segments -->
+                <Path Canvas.Left="10" Canvas.Top="5" StrokeThickness="1"
+                      Data="{Binding VisionRaysGeometry}"
+                      Visibility="{Binding DataContext.ShowVisionRays, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVis}}">
+                    <Path.Stroke>
+                        <SolidColorBrush Color="{Binding VisionRaysStroke}"/>
+                    </Path.Stroke>
+                </Path>
                 <!-- Creature body — fill from genetic color, stroke from origin -->
                 <Polygon Points="0,0 10,5 0,10" StrokeThickness="1.5">
                     <Polygon.Fill>
