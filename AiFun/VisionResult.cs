@@ -7,7 +7,8 @@ namespace AiFun
         None,
         Wall,
         AliveCreature,
-        DeadCreature
+        DeadCreature,
+        Food
     }
 
     public class VisionResult

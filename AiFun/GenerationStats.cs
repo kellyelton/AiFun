@@ -10,5 +10,6 @@ namespace AiFun
         public double AvgVisionDistance { get; set; }
         public int TotalBabies { get; set; }
         public int PopulationPeak { get; set; }
+        public double TotalFoodEaten { get; set; }
     }
 }

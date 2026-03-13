@@ -47,9 +47,13 @@
                     <Rectangle x:Name="LegendAvgVision" Width="14" Height="3" Fill="#FFCE93D8" Margin="0,0,4,0" VerticalAlignment="Center" RadiusX="1" RadiusY="1"/>
                     <TextBlock Text="Avg Vision" Foreground="#AAFFFFFF" FontSize="10"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,0" MouseLeftButtonDown="Legend_Click" Tag="TotalBabies" Cursor="Hand">
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,0" MouseLeftButtonDown="Legend_Click" Tag="TotalBabies" Cursor="Hand">
                     <Rectangle x:Name="LegendTotalBabies" Width="14" Height="3" Fill="#FFF06292" Margin="0,0,4,0" VerticalAlignment="Center" RadiusX="1" RadiusY="1"/>
                     <TextBlock Text="Babies" Foreground="#AAFFFFFF" FontSize="10"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,0" MouseLeftButtonDown="Legend_Click" Tag="FoodEaten" Cursor="Hand">
+                    <Rectangle x:Name="LegendFoodEaten" Width="14" Height="3" Fill="#FF8BC34A" Margin="0,0,4,0" VerticalAlignment="Center" RadiusX="1" RadiusY="1"/>
+                    <TextBlock Text="Food Eaten" Foreground="#AAFFFFFF" FontSize="10"/>
                 </StackPanel>
             </WrapPanel>
         </Grid>

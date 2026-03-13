@@ -111,6 +111,8 @@ namespace AiFun
         public double WallAhead { get; private set; }
         public double AliveCreatureAhead { get; private set; }
         public double DeadCreatureAhead { get; private set; }
+        public double FoodAhead { get; private set; }
+        public double FoodEnergyAhead { get; private set; }
         public double DistanceToObjectAhead { get; private set; }
 
         public string VisionRayColor
@@ -120,6 +122,7 @@ namespace AiFun
                 if (WallAhead > 0) return "#CCFF4444";
                 if (AliveCreatureAhead > 0) return "#CCFFAA00";
                 if (DeadCreatureAhead > 0) return "#CC44CC44";
+                if (FoodAhead > 0) return "#CC00CC00";
                 return "#44888888";
             }
         }
@@ -226,17 +229,17 @@ namespace AiFun
         {
             get
             {
-                // Composite fitness: primary=distance, secondary=turn, tertiary=survival, quaternary=babies
+                // Composite fitness: primary=survival, secondary=babies, tertiary=distance
                 // Weights chosen so primary always dominates secondary, etc.
-                return DistanceTraveled * 1000000
-                     + DeltaTurn * 1000
-                     + LengthOfLife * 1
-                     + BabiesCreated * 0.001;
+                return LengthOfLife * 1_000_000_000
+                     + BabiesCreated * 10_000_000
+                     + DistanceTraveled * 1;
             }
         }
 
         public double BabiesCreated { get; set; }
         public double OthersEaten { get; set; }
+        public double FoodEaten { get; set; }
 
         // Genetic color channels [0, 1] — inherited via crossover
         public double ColorR { get; private set; }
@@ -368,6 +371,14 @@ namespace AiFun
             if (IsDead) return;
             foreach (var other in Touching)
             {
+                if (other is FoodPellet food && !food.IsConsumed)
+                {
+                    var gained = food.Bite(_eco.FoodBiteSize);
+                    AvailableEnergy += gained;
+                    FoodEaten += gained;
+                    continue;
+                }
+
                 // don't worry about inanimate objects right now
                 if ((other is AnimateObject) == false) continue;
                 // If not an animal, don't worry about it now
@@ -428,6 +439,12 @@ namespace AiFun
             WallAhead = result.HitType == VisionHitType.Wall ? 1 : 0;
             AliveCreatureAhead = result.HitType == VisionHitType.AliveCreature ? 1 : 0;
             DeadCreatureAhead = result.HitType == VisionHitType.DeadCreature ? 1 : 0;
+            FoodAhead = result.HitType == VisionHitType.Food ? 1 : 0;
+
+            if (result.HitType == VisionHitType.Food && result.HitObject is FoodPellet foodPellet)
+                FoodEnergyAhead = Math.Clamp(foodPellet.Energy / _eco.FoodMaxEnergy, 0, 1);
+            else
+                FoodEnergyAhead = 0;
 
             if (result.HitType != VisionHitType.None && VisionDistance > 0)
                 DistanceToObjectAhead = 1.0 - (result.Distance / VisionDistance);
@@ -479,6 +496,10 @@ namespace AiFun
             _mapper.MapInput(x => x.WallAhead);
             _mapper.MapInput(x => x.AliveCreatureAhead);
             _mapper.MapInput(x => x.DeadCreatureAhead);
+
+            // Food vision inputs
+            _mapper.MapInput(x => x.FoodAhead);
+            _mapper.MapInput(x => x.FoodEnergyAhead);
 
             // DistanceToObjectAhead: already [0,1], inverted (closer = higher)
             _mapper.MapInput(x => x.DistanceToObjectAhead);

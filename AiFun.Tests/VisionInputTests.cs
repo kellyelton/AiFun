@@ -6,16 +6,17 @@ namespace AiFun.Tests;
 public class VisionInputTests
 {
     [Fact]
-    public void Network_has_6_inputs_and_2_outputs()
+    public void Network_has_8_inputs_and_2_outputs()
     {
         var eco = new Ecosystem(2000, 2000);
         var animal = new Animal(eco);
 
-        // Per roadmap Step 1b: 6 inputs (AvailableEnergy, LookingAngle, WallAhead,
-        // AliveCreatureAhead, DeadCreatureAhead, DistanceToObjectAhead)
-        // and 2 outputs (Speed, TurnDeltaPerTick)
+        // 8 inputs: AvailableEnergy, LookingAngle, WallAhead,
+        // AliveCreatureAhead, DeadCreatureAhead, FoodAhead, FoodEnergyAhead,
+        // DistanceToObjectAhead
+        // 2 outputs: Speed, TurnDeltaPerTick
         var brain = animal.Brain;
-        Assert.Equal(6, brain.InputCount);
+        Assert.Equal(8, brain.InputCount);
         Assert.Equal(2, brain.OutputCount);
     }
 

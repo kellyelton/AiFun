@@ -97,24 +97,75 @@ The existing spatial hash grid (`SpatialCellSize = 40`, `ComposeSpatialKey`) is 
 ---
 
 ### Step 2: Align Selection Pressure
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 **Effort:** Trivial | **Impact:** 🔥🔥
 
 Selection currently rewards `DistanceTraveled` first, which selects for creatures that sprint in straight lines until they die. This opposes the goal of natural survival behavior.
 
-**Approach:** Change `NewGeneration()` sort to prioritize `LengthOfLife`:
+**Approach:** Changed the composite `Fitness` property weights to prioritize `LengthOfLife` > `BabiesCreated` > `DistanceTraveled`:
 ```csharp
-.OrderByDescending(x => x.LengthOfLife)
-.ThenByDescending(x => x.BabiesCreated)
-.ThenByDescending(x => x.DistanceTraveled)
+return LengthOfLife * 1_000_000_000
+     + BabiesCreated * 10_000_000
+     + DistanceTraveled * 1;
 ```
 
-**Files:** `Ecosystem.cs` (`NewGeneration()`)
+`NewGeneration()` already sorts by `.OrderByDescending(x => x.Fitness)`, so reweighting the composite score was sufficient — no sort changes needed.
+
+**Files:** `Animal.cs` (`Fitness` property)
 
 **Alternatives considered:**
 - A) Swap to `LengthOfLife` primary ✅ chosen as first step
 - B) Composite fitness: `LengthOfLife + BabiesCreated * bonus` — good future enhancement
 - C) Remove generational reset entirely, rely on natural selection — larger change, revisit later
+
+---
+
+### Step 2b: Food Pellets
+**Status:** 🔧 In progress
+**Effort:** Medium | **Impact:** 🔥🔥🔥
+
+Without an external food source, the optimal survival strategy is "go blind, sit still" — vision and movement are pure energy costs with no payoff. Food pellets give creatures a reason to see, move, and navigate.
+
+#### Design
+
+**Food pellet** — a static object that spawns randomly, grows in energy over time, and can be nibbled by creatures on contact.
+
+| Parameter (slider) | Default | Description |
+|---------------------|---------|-------------|
+| `FoodTargetCount` | 30 | Ecosystem maintains this many pellets; respawns when eaten |
+| `FoodMinStartEnergy` | 50 | Energy when freshly spawned |
+| `FoodMaxEnergy` | 500 | Growth cap — fully grown pellet = 5 seconds of life |
+| `FoodGrowthRate` | 10/sec | Energy gained per second; ~45s from min to cap |
+| `FoodBiteSize` | 100 | Energy consumed per contact (global, not genetic) |
+
+**Eating mechanic:** On contact, creature absorbs `min(FoodBiteSize, pellet.Energy)`. Pellet energy decreases by the same amount. Pellet disappears when energy reaches 0. A new one spawns to maintain `FoodTargetCount`.
+
+**Visuals:** Green circle. Radius scales with energy (4px at min, 16px at max). Color darkens from light green to forest green as it grows.
+
+**Spawn location:** Anywhere in the world randomly, including near walls — rewards smarter navigation.
+
+#### Neural network inputs (2 new, total inputs: 6 → 8)
+
+| # | Input | Range | Meaning |
+|---|-------|-------|---------|
+| 7 | `FoodAhead` | 0 or 1 | First thing hit by vision ray is a food pellet |
+| 8 | `FoodEnergyAhead` | [0, 1] | Energy of detected food, normalized by `FoodMaxEnergy` |
+
+At most one of `WallAhead`, `AliveCreatureAhead`, `DeadCreatureAhead`, `FoodAhead` is 1 at a time.
+
+#### Implementation plan
+1. Create `FoodPellet` class (extends `AnimateObject`, speed=0)
+2. Add ecosystem parameters with UI sliders
+3. Add `FoodAhead`, `FoodEnergyAhead` properties to `Animal`
+4. Update `VisionHitType` enum to include `Food`
+5. Update `ObjectAlongLine()` ray march to detect `FoodPellet`
+6. Update `Animal.UpdateVision()` to set `FoodAhead` / `FoodEnergyAhead`
+7. Add food inputs to `SetupNetwork()`
+8. Add food eating to `Animal.HandleTouching()` (before creature interactions)
+9. Add food spawning/removal to `Ecosystem.Update()`
+10. Add `FoodPellet` DataTemplate to `MainWindow.xaml`
+
+**Files:** `FoodPellet.cs` (new), `Animal.cs`, `Ecosystem.cs`, `VisionResult.cs`, `MainWindow.xaml`
 
 ---
 

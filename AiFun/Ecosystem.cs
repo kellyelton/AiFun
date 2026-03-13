@@ -141,9 +141,110 @@ namespace AiFun
             }
         }
 
+        public int FoodTargetCount
+        {
+            get { return _foodTargetCount; }
+            set
+            {
+                if (value == _foodTargetCount) return;
+                _foodTargetCount = Math.Max(0, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public double FoodMinStartEnergy
+        {
+            get { return _foodMinStartEnergy; }
+            set
+            {
+                if (value.Equals(_foodMinStartEnergy)) return;
+                _foodMinStartEnergy = Math.Max(1, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public double FoodMaxEnergy
+        {
+            get { return _foodMaxEnergy; }
+            set
+            {
+                if (value.Equals(_foodMaxEnergy)) return;
+                _foodMaxEnergy = Math.Max(1, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public double FoodGrowthRate
+        {
+            get { return _foodGrowthRate; }
+            set
+            {
+                if (value.Equals(_foodGrowthRate)) return;
+                _foodGrowthRate = Math.Max(0, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public double FoodBiteSize
+        {
+            get { return _foodBiteSize; }
+            set
+            {
+                if (value.Equals(_foodBiteSize)) return;
+                _foodBiteSize = Math.Max(1, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public int FoodCount
+        {
+            get { return AnimateObjects.OfType<FoodPellet>().Count(); }
+        }
+
         public int AliveCount
         {
             get { return AnimateObjects.OfType<Animal>().Count(); }
+        }
+
+        /// <summary>
+        /// Genetic diversity of living creatures as a percentage (0-100).
+        /// Average coefficient of variation across key genetic traits.
+        /// High = diverse population, low = converged/inbred.
+        /// </summary>
+        public double GeneticDiversity
+        {
+            get
+            {
+                var animals = AnimateObjects.OfType<Animal>().Where(a => !a.IsDead).ToList();
+                if (animals.Count < 2) return 0;
+
+                var traits = new Func<Animal, double>[]
+                {
+                    a => a.MovementEfficency,
+                    a => a.VisionDistance,
+                    a => a.ColorR,
+                    a => a.ColorG,
+                    a => a.ColorB,
+                    a => a.Sex,
+                };
+
+                double totalCv = 0;
+                int validTraits = 0;
+                foreach (var trait in traits)
+                {
+                    var values = animals.Select(trait).ToList();
+                    var mean = values.Average();
+                    if (mean < 0.0001) continue; // skip near-zero means to avoid division issues
+                    var variance = values.Average(v => (v - mean) * (v - mean));
+                    var stdDev = Math.Sqrt(variance);
+                    totalCv += stdDev / mean;
+                    validTraits++;
+                }
+
+                if (validTraits == 0) return 0;
+                // CV of 0.5 is fairly diverse for [0,1] traits, scale so that maps to ~100%
+                return Math.Min(100, (totalCv / validTraits) * 200);
+            }
         }
 
         public int DeadCount
@@ -206,6 +307,11 @@ namespace AiFun
         private double _visionEnergyCostMultiplier = 0.5;
         private double _mutationRate = 0.001;
         private int _topBreeders = 30;
+        private int _foodTargetCount = 100;
+        private double _foodMinStartEnergy = 50;
+        private double _foodMaxEnergy = 500;
+        private double _foodGrowthRate = 10;
+        private double _foodBiteSize = 100;
 
         public double SimulationTime { get; private set; }
 
@@ -225,6 +331,22 @@ namespace AiFun
                 if (AnimateObjects.Count > _peakPopulation)
                     _peakPopulation = AnimateObjects.Count;
             };
+        }
+
+        public void SpawnFoodToTarget()
+        {
+            var currentFood = AnimateObjects.OfType<FoodPellet>().Count();
+            for (var i = currentFood; i < FoodTargetCount; i++)
+            {
+                AnimateObjects.Add(new FoodPellet(this));
+            }
+        }
+
+        public void RemoveConsumedFood()
+        {
+            var consumed = AnimateObjects.OfType<FoodPellet>().Where(f => f.IsConsumed).ToList();
+            foreach (var f in consumed)
+                AnimateObjects.Remove(f);
         }
 
         public void Create<T>(T obj) where T : AnimateObject
@@ -273,7 +395,8 @@ namespace AiFun
                     AvgDistance = allDead.Average(x => x.DistanceTraveled),
                     AvgVisionDistance = allDead.Average(x => x.VisionDistance),
                     TotalBabies = (int)allDead.Sum(x => x.BabiesCreated),
-                    PopulationPeak = _peakPopulation
+                    PopulationPeak = _peakPopulation,
+                    TotalFoodEaten = allDead.Sum(x => x.FoodEaten)
                 });
             }
 
@@ -376,7 +499,9 @@ namespace AiFun
                         if (location.Contains(x, y))
                         {
                             var hitType = VisionHitType.AliveCreature;
-                            if (other is Animal animal && animal.IsDead)
+                            if (other is FoodPellet)
+                                hitType = VisionHitType.Food;
+                            else if (other is Animal animal && animal.IsDead)
                                 hitType = VisionHitType.DeadCreature;
 
                             return new VisionResult
@@ -468,7 +593,11 @@ namespace AiFun
                 an.HandleTouching();
                 an.Touching.Clear();
             }
-            if (AnimateObjects.Count == 0)
+            // Remove consumed food and respawn to target count
+            RemoveConsumedFood();
+            SpawnFoodToTarget();
+
+            if (AnimateObjects.OfType<Animal>().Count() == 0)
             {
                 NewGeneration();
                 return;
@@ -494,6 +623,8 @@ namespace AiFun
             OnPropertyChanged(nameof(PregnantCount));
             OnPropertyChanged(nameof(AverageEnergy));
             OnPropertyChanged(nameof(AverageSpeed));
+            OnPropertyChanged(nameof(FoodCount));
+            OnPropertyChanged(nameof(GeneticDiversity));
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

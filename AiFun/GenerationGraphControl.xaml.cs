@@ -20,7 +20,8 @@ namespace AiFun
             ["AvgSurvival"] = true,
             ["BestDistance"] = true,
             ["AvgVision"] = true,
-            ["TotalBabies"] = true
+            ["TotalBabies"] = true,
+            ["FoodEaten"] = true
         };
 
         private static readonly Dictionary<string, Color> SeriesColors = new()
@@ -29,7 +30,8 @@ namespace AiFun
             ["AvgSurvival"] = Color.FromRgb(129, 199, 132),
             ["BestDistance"] = Color.FromRgb(255, 183, 77),
             ["AvgVision"] = Color.FromRgb(206, 147, 216),
-            ["TotalBabies"] = Color.FromRgb(240, 98, 146)
+            ["TotalBabies"] = Color.FromRgb(240, 98, 146),
+            ["FoodEaten"] = Color.FromRgb(139, 195, 74)
         };
 
         public GenerationGraphControl()
@@ -74,6 +76,7 @@ namespace AiFun
             LegendBestDistance.Opacity = _seriesVisible["BestDistance"] ? 1.0 : 0.3;
             LegendAvgVision.Opacity = _seriesVisible["AvgVision"] ? 1.0 : 0.3;
             LegendTotalBabies.Opacity = _seriesVisible["TotalBabies"] ? 1.0 : 0.3;
+            LegendFoodEaten.Opacity = _seriesVisible["FoodEaten"] ? 1.0 : 0.3;
         }
 
         private void Redraw()
@@ -108,6 +111,7 @@ namespace AiFun
                 ("BestDistance", s => s.BestDistance, 2.0),
                 ("AvgVision", s => s.AvgVisionDistance, 1.5),
                 ("TotalBabies", s => (double)s.TotalBabies, 1.5),
+                ("FoodEaten", s => s.TotalFoodEaten, 1.5),
             };
 
             // Collect end label positions, then resolve overlaps
