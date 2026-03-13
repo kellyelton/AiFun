@@ -20,7 +20,7 @@ public class BreedingPoolTests
     public void Ecosystem_TopBreeders_defaults_to_10()
     {
         var eco = CreateEcosystem();
-        Assert.Equal(10, eco.TopBreeders);
+        Assert.Equal(30, eco.TopBreeders);
     }
 
     [Fact]

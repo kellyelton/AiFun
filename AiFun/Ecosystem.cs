@@ -205,7 +205,7 @@ namespace AiFun
         private double _maxVisionDistance = 300;
         private double _visionEnergyCostMultiplier = 0.5;
         private double _mutationRate = 0.001;
-        private int _topBreeders = 10;
+        private int _topBreeders = 30;
 
         public double SimulationTime { get; private set; }
 
