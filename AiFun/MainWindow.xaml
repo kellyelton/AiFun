@@ -337,8 +337,8 @@
                         <Slider Style="{StaticResource HudSlider}" Minimum="0" Maximum="250" Value="{Binding Ecosystem.ElitePopulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBlock Style="{StaticResource HudLabel}" Text="Random Offspring"/>
                         <Slider Style="{StaticResource HudSlider}" Minimum="0" Maximum="250" Value="{Binding Ecosystem.RandomPopulation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.TopBreeders, StringFormat='Top Breeders ({0})'}"/>
-                        <Slider Style="{StaticResource HudSlider}" Minimum="2" Maximum="50" Value="{Binding Ecosystem.TopBreeders, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.TournamentSize, StringFormat='Tournament Size ({0})'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="2" Maximum="20" Value="{Binding Ecosystem.TournamentSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
                         <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.MutationRate, StringFormat='Mutation Rate ({0:P1})'}"/>
                         <Slider Style="{StaticResource HudSlider}" Minimum="0.001" Maximum="0.10" Value="{Binding Ecosystem.MutationRate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.001"/>
                         <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.MutationStepSize, StringFormat='Mutation Step Size ({0:F2})'}"/>

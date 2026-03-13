@@ -49,7 +49,7 @@ Creatures that actively seek food and mates, sustain a population through natura
 - Live creatures: `BreedDesire > EatDesire` → attempt breed; `EatDesire > BreedDesire` → energy-comparison fight
 
 ### Selection / Evolution
-- Generational: when all creatures die, top `TopBreeders` (30) by fitness become breeding pool
+- Generational: when all creatures die, tournament selection (size 5) picks parents for each offspring
 - Fitness: `LengthOfLife * 1000 + BabiesCreated * 5000 + FoodEaten * 1`
 - Crossover: 50/50 random selection per gene, per weight
 - Mutation: 0.1% chance per weight → complete random replacement in [-1, 1]
@@ -478,7 +478,7 @@ This gives a fixed, tractable network topology that evolution can optimize effic
 ---
 
 ### Step 14: Tournament Selection
-**Status:** Not started
+**Status:** Done
 **Effort:** Small | **Impact:** 🔥🔥
 
 Currently the top 30 creatures by fitness become the entire breeding pool. This causes rapid convergence — after a few generations, all creatures are descendants of the same 2-3 high-fitness individuals. Diversity collapses, and the population gets stuck in local optima (usually: be blind, sit still, die slowly).

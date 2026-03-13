@@ -196,13 +196,13 @@ namespace AiFun
             }
         }
 
-        public int TopBreeders
+        public int TournamentSize
         {
-            get { return _topBreeders; }
+            get { return _tournamentSize; }
             set
             {
-                if (value == _topBreeders) return;
-                _topBreeders = Math.Max(2, value);
+                if (value == _tournamentSize) return;
+                _tournamentSize = Math.Max(2, value);
                 OnPropertyChanged();
             }
         }
@@ -379,7 +379,7 @@ namespace AiFun
         private int _hiddenLayerSize = 12;
         private double _mutationRate = 0.03;
         private double _mutationStepSize = 0.1;
-        private int _topBreeders = 30;
+        private int _tournamentSize = 5;
         private int _foodTargetCount = 150;
         private double _foodMinStartEnergy = 200;
         private double _foodMaxEnergy = 500;
@@ -448,31 +448,27 @@ namespace AiFun
 
         public void NewGeneration()
         {
-            var bestOrder = _deadObjects.OfType<Animal>()
-                .OrderByDescending(x => x.Fitness)
-                .Take(TopBreeders)
-                .ToList();
-            if (bestOrder.Count < 2)
+            var deadAnimals = _deadObjects.OfType<Animal>().ToList();
+            if (deadAnimals.Count < 2)
             {
                 Reset();
                 return;
             }
 
             // Record generation stats before clearing
-            var allDead = _deadObjects.OfType<Animal>().ToList();
-            if (allDead.Count > 0)
+            if (deadAnimals.Count > 0)
             {
                 GenerationHistory.Add(new GenerationStats
                 {
                     Generation = GenerationCount,
-                    BestSurvivalTime = allDead.Max(x => x.LengthOfLife),
-                    AvgSurvivalTime = allDead.Average(x => x.LengthOfLife),
-                    BestDistance = allDead.Max(x => x.DistanceTraveled),
-                    AvgDistance = allDead.Average(x => x.DistanceTraveled),
-                    AvgVisionDistance = allDead.Average(x => x.VisionDistance),
-                    TotalBabies = (int)allDead.Sum(x => x.BabiesCreated),
+                    BestSurvivalTime = deadAnimals.Max(x => x.LengthOfLife),
+                    AvgSurvivalTime = deadAnimals.Average(x => x.LengthOfLife),
+                    BestDistance = deadAnimals.Max(x => x.DistanceTraveled),
+                    AvgDistance = deadAnimals.Average(x => x.DistanceTraveled),
+                    AvgVisionDistance = deadAnimals.Average(x => x.VisionDistance),
+                    TotalBabies = (int)deadAnimals.Sum(x => x.BabiesCreated),
                     PopulationPeak = _peakPopulation,
-                    TotalFoodEaten = allDead.Sum(x => x.FoodEaten)
+                    TotalFoodEaten = deadAnimals.Sum(x => x.FoodEaten)
                 });
             }
 
@@ -480,13 +476,13 @@ namespace AiFun
             _deadObjects.Clear();
             _peakPopulation = 0;
             SimulationTime = 0;
-            // Create elite offspring by randomly pairing from the breeding pool
+
+            // Create elite offspring using tournament selection
             for (var i = 0; i < ElitePopulation; i++)
             {
-                var idx1 = _rnd.Next(bestOrder.Count);
-                int idx2;
-                do { idx2 = _rnd.Next(bestOrder.Count); } while (idx2 == idx1 && bestOrder.Count > 1);
-                var an = new Animal(this, bestOrder[idx1], bestOrder[idx2]);
+                var parent1 = TournamentSelect(deadAnimals);
+                var parent2 = TournamentSelect(deadAnimals);
+                var an = new Animal(this, parent1, parent2);
                 AnimateObjects.Add(an);
             }
             for (var i = 0; i < RandomPopulation; i++)
@@ -496,6 +492,19 @@ namespace AiFun
             }
             GenerationCount++;
             RaiseSummaryPropertyChanged();
+        }
+
+        private Animal TournamentSelect(List<Animal> candidates)
+        {
+            var tourneySize = Math.Min(TournamentSize, candidates.Count);
+            Animal best = null;
+            for (var i = 0; i < tourneySize; i++)
+            {
+                var candidate = candidates[_rnd.Next(candidates.Count)];
+                if (best == null || candidate.Fitness > best.Fitness)
+                    best = candidate;
+            }
+            return best!;
         }
 
         public Object ObjectAlongLine(double angle, Point start)
