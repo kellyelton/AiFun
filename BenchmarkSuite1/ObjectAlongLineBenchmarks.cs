@@ -41,6 +41,8 @@ namespace AiFun.Benchmarks
                 };
                 _ecosystem.AnimateObjects.Add(obj);
             }
+
+            _ecosystem.RebuildSpatialIndex();
         }
 
         [Benchmark]

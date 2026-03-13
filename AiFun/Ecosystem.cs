@@ -342,6 +342,8 @@ namespace AiFun
 
         private int _peakPopulation;
         private static Random _rnd = new Random();
+        private Dictionary<long, List<AnimateObject>> _spatialIndex = new();
+        private bool _spatialIndexDirty = true;
 
         public Ecosystem(double width, double height)
         {
@@ -352,6 +354,7 @@ namespace AiFun
             GenerationHistory = new ObservableCollection<GenerationStats>();
             AnimateObjects.CollectionChanged += (sender, args) =>
             {
+                _spatialIndexDirty = true;
                 RaiseSummaryPropertyChanged();
                 if (AnimateObjects.Count > _peakPopulation)
                     _peakPopulation = AnimateObjects.Count;
@@ -455,9 +458,6 @@ namespace AiFun
 
         public VisionResult ObjectAlongLine(double angle, Point start, double visionDistance)
         {
-            var objects = AnimateObjects;
-            var objectCount = objects.Count;
-
             var startX = start.X;
             var startY = start.Y;
             var radians = angle * (Math.PI / 180.0);
@@ -469,32 +469,10 @@ namespace AiFun
             var x = startX + xStep;
             var y = startY + yStep;
 
-            // Build spatial index
-            var spatialIndex = new Dictionary<long, List<AnimateObject>>(objectCount);
-            for (var i = 0; i < objectCount; i++)
-            {
-                var obj = objects[i];
-                var location = obj.Location;
-                var minCellX = (int)(location.Left / SpatialCellSize);
-                var maxCellX = (int)(location.Right / SpatialCellSize);
-                var minCellY = (int)(location.Top / SpatialCellSize);
-                var maxCellY = (int)(location.Bottom / SpatialCellSize);
+            if (_spatialIndexDirty)
+                RebuildSpatialIndex();
 
-                for (var cellX = minCellX; cellX <= maxCellX; cellX++)
-                {
-                    for (var cellY = minCellY; cellY <= maxCellY; cellY++)
-                    {
-                        var key = ComposeSpatialKey(cellX, cellY);
-                        if (spatialIndex.TryGetValue(key, out var bucket) == false)
-                        {
-                            bucket = new List<AnimateObject>();
-                            spatialIndex[key] = bucket;
-                        }
-
-                        bucket.Add(obj);
-                    }
-                }
-            }
+            var spatialIndex = _spatialIndex;
 
             // Ray march
             for (var distance = stepDistance; distance <= visionDistance; distance += stepDistance)
@@ -556,9 +534,48 @@ namespace AiFun
             return ((long)x << 32) | (uint)y;
         }
 
+        public void RebuildSpatialIndex()
+        {
+            var objects = AnimateObjects;
+            var objectCount = objects.Count;
+
+            // Clear and reuse existing dictionary to reduce allocations
+            foreach (var bucket in _spatialIndex.Values)
+                bucket.Clear();
+
+            _spatialIndexDirty = false;
+
+            for (var i = 0; i < objectCount; i++)
+            {
+                var obj = objects[i];
+                var location = obj.Location;
+                var minCellX = (int)(location.Left / SpatialCellSize);
+                var maxCellX = (int)(location.Right / SpatialCellSize);
+                var minCellY = (int)(location.Top / SpatialCellSize);
+                var maxCellY = (int)(location.Bottom / SpatialCellSize);
+
+                for (var cellX = minCellX; cellX <= maxCellX; cellX++)
+                {
+                    for (var cellY = minCellY; cellY <= maxCellY; cellY++)
+                    {
+                        var key = ComposeSpatialKey(cellX, cellY);
+                        if (_spatialIndex.TryGetValue(key, out var bucket) == false)
+                        {
+                            bucket = new List<AnimateObject>();
+                            _spatialIndex[key] = bucket;
+                        }
+
+                        bucket.Add(obj);
+                    }
+                }
+            }
+        }
+
         public void Update(double time)
         {
             SimulationTime += time;
+
+            RebuildSpatialIndex();
 
             foreach (var an in AnimateObjects.ToList())
             {
