@@ -7,7 +7,7 @@ namespace AiFun.Tests;
 /// Tests that verify the DIRECTION of speed-vision coupling:
 /// - High Speed (NN output) -> fewer active rays, shorter vision distance (tunnel vision)
 /// - Low Speed (NN output) -> more active rays, full vision distance
-/// - TurnDeltaPerTick (spinning) should NOT affect vision coupling
+/// - High TurnDeltaPerTick (spinning) should also reduce vision (combined with Speed)
 /// </summary>
 public class SpeedVisionCouplingDirectionTests
 {
@@ -60,47 +60,50 @@ public class SpeedVisionCouplingDirectionTests
             $"High speed should have shorter vision ({visionAtMaxSpeed}) than low speed ({visionAtZeroSpeed})");
     }
 
-    // --- Spinning (TurnDeltaPerTick) should NOT reduce vision ---
+    // --- Spinning (TurnDeltaPerTick) DOES reduce vision ---
 
     [Fact]
-    public void Spinning_in_place_with_low_speed_has_full_vision()
+    public void Spinning_in_place_with_low_speed_reduces_vision()
     {
         var eco = CreateEcosystem();
         eco.VisionRayCount = 5;
         var animal = CreateAnimalAt(eco, 1000, 1000);
         animal.VisionDistance = 200;
         animal.Speed = 0;
-        animal.TurnDeltaPerTick = 10; // spinning fast
+        animal.TurnDeltaPerTick = 10; // spinning at max turn speed -> turnFraction = 1.0
 
         var rays = animal.ComputeActiveRayCount();
         var vision = animal.ComputeEffectiveVisionDistance();
 
-        Assert.Equal(5, rays);
-        Assert.Equal(200, vision, precision: 1);
+        // Max turn speed should reduce vision the same as max forward speed
+        Assert.Equal(1, rays);
+        Assert.Equal(50, vision, precision: 1);
     }
 
     [Fact]
-    public void Spinning_in_place_shows_all_rays_in_UpdateVision()
+    public void Spinning_in_place_disables_outer_rays_in_UpdateVision()
     {
         var eco = CreateEcosystem(200, 200);
         eco.VisionRayCount = 5;
         eco.VisionFieldOfView = 120;
-        var animal = CreateAnimalAt(eco, 5, 100);
-        animal.LookingAngle = 180; // facing wall
+        // Place animal near right wall so center ray can detect wall within reduced vision
+        var animal = CreateAnimalAt(eco, 170, 100);
+        animal.LookingAngle = 0; // facing right wall
         animal.VisionDistance = 200;
         animal.Speed = 0;
-        animal.TurnDeltaPerTick = 10; // spinning fast
+        animal.TurnDeltaPerTick = 10; // spinning at max -> only center ray active
 
         eco.AnimateObjects.Clear();
         eco.AnimateObjects.Add(animal);
 
         animal.UpdateVision();
 
-        for (int i = 0; i < 5; i++)
-        {
-            Assert.True(animal.RayResults[i].ObjectType > 0,
-                $"Ray {i} should be active when spinning with low Speed");
-        }
+        // Only center ray should be active
+        Assert.Equal(0, animal.RayResults[0].ObjectType);
+        Assert.Equal(0, animal.RayResults[1].ObjectType);
+        Assert.True(animal.RayResults[2].ObjectType > 0, "Center ray should still be active");
+        Assert.Equal(0, animal.RayResults[3].ObjectType);
+        Assert.Equal(0, animal.RayResults[4].ObjectType);
     }
 
     // --- Cache consistency after Update() ---

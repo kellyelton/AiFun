@@ -820,21 +820,33 @@ namespace AiFun
         }
 
         private const double MaxSpeed = 20.0;
+        private const double MaxTurnSpeed = 10.0;
         private const double SpeedVisionScalingFactor = 0.75;
 
         /// <summary>
-        /// Computes effective vision distance based on current speed.
-        /// At full speed, vision is 25% of max. Standing still gives full vision.
+        /// Computes the combined speed fraction from forward speed and turn speed.
+        /// Uses the max of the two so either fast movement or fast spinning reduces vision.
+        /// </summary>
+        private double ComputeCombinedSpeedFraction()
+        {
+            var forwardFraction = Math.Clamp(Speed / MaxSpeed, 0, 1);
+            var turnFraction = Math.Clamp(Math.Abs(TurnDeltaPerTick) / MaxTurnSpeed, 0, 1);
+            return Math.Max(forwardFraction, turnFraction);
+        }
+
+        /// <summary>
+        /// Computes effective vision distance based on current speed and turn rate.
+        /// At full speed or full turn rate, vision is 25% of max. Standing still gives full vision.
         /// </summary>
         internal double ComputeEffectiveVisionDistance()
         {
-            var speedFraction = Math.Clamp(Speed / MaxSpeed, 0, 1);
+            var speedFraction = ComputeCombinedSpeedFraction();
             return VisionDistance * (1 - speedFraction * SpeedVisionScalingFactor);
         }
 
         /// <summary>
-        /// Computes how many rays are active based on current speed.
-        /// Outermost pairs are disabled first as speed increases.
+        /// Computes how many rays are active based on current speed and turn rate.
+        /// Outermost pairs are disabled first as speed or turn rate increases.
         /// Center ray always remains active.
         /// For 5 rays (2 pairs): thresholds at 0.25 and 0.75 matching design doc.
         /// Generalizes to any ray count with thresholds evenly spaced from 0.25 to 0.75.
@@ -844,7 +856,7 @@ namespace AiFun
             var rayCount = _eco.VisionRayCount;
             if (rayCount <= 1) return 1;
 
-            var speedFraction = Math.Clamp(Speed / MaxSpeed, 0, 1);
+            var speedFraction = ComputeCombinedSpeedFraction();
             var pairs = rayCount / 2; // number of symmetric pairs (excluding center)
 
             // Thresholds spaced evenly from 0.25 to 0.75

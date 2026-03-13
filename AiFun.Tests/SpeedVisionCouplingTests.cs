@@ -558,4 +558,144 @@ public class SpeedVisionCouplingTests
                 $"Ray {i} should be active at negative speed (treated as 0)");
         }
     }
+
+    // --- TurnDeltaPerTick affects vision ---
+
+    [Fact]
+    public void High_turn_speed_with_zero_forward_speed_reduces_rays()
+    {
+        var eco = CreateEcosystem();
+        eco.VisionRayCount = 5;
+        var animal = CreateAnimalAt(eco, 1000, 1000);
+        animal.VisionDistance = 200;
+        animal.Speed = 0;
+        animal.TurnDeltaPerTick = 10; // max turn -> turnFraction = 1.0
+
+        Assert.Equal(1, animal.ComputeActiveRayCount());
+    }
+
+    [Fact]
+    public void High_turn_speed_with_zero_forward_speed_reduces_vision_distance()
+    {
+        var eco = CreateEcosystem();
+        var animal = CreateAnimalAt(eco, 1000, 1000);
+        animal.VisionDistance = 200;
+        animal.Speed = 0;
+        animal.TurnDeltaPerTick = 10; // max turn -> turnFraction = 1.0
+
+        // effectiveVision = 200 * (1 - 1.0 * 0.75) = 50
+        Assert.Equal(50, animal.ComputeEffectiveVisionDistance(), precision: 2);
+    }
+
+    [Fact]
+    public void Both_high_speed_and_high_turn_uses_whichever_gives_more_reduction()
+    {
+        var eco = CreateEcosystem();
+        eco.VisionRayCount = 5;
+        var animal = CreateAnimalAt(eco, 1000, 1000);
+        animal.VisionDistance = 200;
+
+        // Speed fraction = 10/20 = 0.5, turn fraction = 8/10 = 0.8
+        // Combined = max(0.5, 0.8) = 0.8
+        animal.Speed = 10;
+        animal.TurnDeltaPerTick = 8;
+
+        var raysWithTurn = animal.ComputeActiveRayCount();
+        var visionWithTurn = animal.ComputeEffectiveVisionDistance();
+
+        // Compare against speed-only: fraction 0.5
+        animal.TurnDeltaPerTick = 0;
+        var raysSpeedOnly = animal.ComputeActiveRayCount();
+        var visionSpeedOnly = animal.ComputeEffectiveVisionDistance();
+
+        // Turn should give MORE reduction (fewer rays, shorter distance)
+        Assert.True(raysWithTurn <= raysSpeedOnly,
+            $"With high turn, rays ({raysWithTurn}) should be <= speed-only rays ({raysSpeedOnly})");
+        Assert.True(visionWithTurn < visionSpeedOnly,
+            $"With high turn, vision ({visionWithTurn}) should be < speed-only vision ({visionSpeedOnly})");
+    }
+
+    [Fact]
+    public void Zero_speed_and_zero_turn_gives_full_vision()
+    {
+        var eco = CreateEcosystem();
+        eco.VisionRayCount = 5;
+        var animal = CreateAnimalAt(eco, 1000, 1000);
+        animal.VisionDistance = 200;
+        animal.Speed = 0;
+        animal.TurnDeltaPerTick = 0;
+
+        Assert.Equal(5, animal.ComputeActiveRayCount());
+        Assert.Equal(200, animal.ComputeEffectiveVisionDistance(), precision: 2);
+    }
+
+    [Fact]
+    public void Negative_turn_delta_uses_absolute_value()
+    {
+        var eco = CreateEcosystem();
+        eco.VisionRayCount = 5;
+        var animal = CreateAnimalAt(eco, 1000, 1000);
+        animal.VisionDistance = 200;
+        animal.Speed = 0;
+
+        animal.TurnDeltaPerTick = 10;
+        var raysPositive = animal.ComputeActiveRayCount();
+        var visionPositive = animal.ComputeEffectiveVisionDistance();
+
+        animal.TurnDeltaPerTick = -10;
+        var raysNegative = animal.ComputeActiveRayCount();
+        var visionNegative = animal.ComputeEffectiveVisionDistance();
+
+        Assert.Equal(raysPositive, raysNegative);
+        Assert.Equal(visionPositive, visionNegative, precision: 2);
+    }
+
+    [Fact]
+    public void Turn_delta_above_max_is_treated_as_max_for_vision()
+    {
+        var eco = CreateEcosystem();
+        eco.VisionRayCount = 5;
+        var animal = CreateAnimalAt(eco, 1000, 1000);
+        animal.VisionDistance = 200;
+        animal.Speed = 0;
+
+        animal.TurnDeltaPerTick = 10; // exactly max
+        var raysAtMax = animal.ComputeActiveRayCount();
+        var visionAtMax = animal.ComputeEffectiveVisionDistance();
+
+        animal.TurnDeltaPerTick = 15; // above max
+        var raysAboveMax = animal.ComputeActiveRayCount();
+        var visionAboveMax = animal.ComputeEffectiveVisionDistance();
+
+        Assert.Equal(raysAtMax, raysAboveMax);
+        Assert.Equal(visionAtMax, visionAboveMax, precision: 2);
+    }
+
+    [Fact]
+    public void Intermediate_turn_speed_gives_partial_vision_reduction()
+    {
+        var eco = CreateEcosystem();
+        eco.VisionRayCount = 5;
+        var animal = CreateAnimalAt(eco, 1000, 1000);
+        animal.VisionDistance = 200;
+        animal.Speed = 0;
+
+        animal.TurnDeltaPerTick = 0;
+        var fullVision = animal.ComputeEffectiveVisionDistance();
+        var fullRays = animal.ComputeActiveRayCount();
+
+        animal.TurnDeltaPerTick = 5; // half of max
+        var halfVision = animal.ComputeEffectiveVisionDistance();
+        var halfRays = animal.ComputeActiveRayCount();
+
+        animal.TurnDeltaPerTick = 10; // max
+        var minVision = animal.ComputeEffectiveVisionDistance();
+        var minRays = animal.ComputeActiveRayCount();
+
+        // Intermediate should be between full and min
+        Assert.True(halfVision < fullVision, "Half turn should reduce vision from full");
+        Assert.True(halfVision > minVision, "Half turn should have more vision than max turn");
+        Assert.True(halfRays <= fullRays, "Half turn should not have more rays than full");
+        Assert.True(halfRays >= minRays, "Half turn should not have fewer rays than max turn");
+    }
 }
