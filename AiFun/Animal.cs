@@ -260,6 +260,25 @@ namespace AiFun
         public double OthersEaten { get; set; }
         public double FoodEaten { get; set; }
 
+        public int HallOfFameRank { get; internal set; }
+
+        public bool IsHallOfFame => Origin == AnimalOrigin.HallOfFame;
+
+        public string HallOfFameIndicatorColor
+        {
+            get
+            {
+                return HallOfFameRank switch
+                {
+                    1 => "#CCFFD700", // gold
+                    2 => "#AAC0C0C0", // silver
+                    3 => "#AACD7F32", // bronze
+                    > 3 => "#55FFFFFF", // subtle white
+                    _ => "#00000000", // transparent for non-HoF
+                };
+            }
+        }
+
         // Recurrent memory inputs — previous tick's outputs fed back as inputs
         public double PrevSpeed { get; internal set; } = 0.5;
         public double PrevTurnDelta { get; internal set; } = 0.5;
@@ -293,6 +312,7 @@ namespace AiFun
                 {
                     AnimalOrigin.Elite => "#FF1565C0",   // blue
                     AnimalOrigin.Natural => "#FFFDD835", // yellow
+                    AnimalOrigin.HallOfFame => "#FFFF6F00", // orange
                     _ => "#FF757575",                    // gray for random
                 };
             }
@@ -403,6 +423,37 @@ namespace AiFun
             Origin = AnimalOrigin.Natural;
             BreedFromSnapshot(mother, fatherBrain, fatherMovEff, fatherVision,
                 fatherPregnancyGene, fatherColorR, fatherColorG, fatherColorB, SetupNetwork());
+        }
+
+        internal Animal(Ecosystem eco, HallOfFameEntry source, int hallOfFameRank)
+        {
+            _eco = eco;
+            _born = eco.SimulationTime;
+            AvailableEnergy = _rnd.NextDouble().DenormalizeFromUnit(0, 10000);
+            Location = new Rect(_rnd.Next(0, (int)_eco.WorldWidth), _rnd.Next(0, (int)_eco.WorldHeight), 5, 5);
+            XVelocity = _rnd.NextDouble().DenormalizeFromUnit(-1, 1);
+            YVelocity = _rnd.NextDouble().DenormalizeFromUnit(-1, 1);
+            LookingAngle = _rnd.NextDouble().DenormalizeFromUnit(0, 360);
+            Speed = _rnd.NextDouble();
+            IsPregnant = false;
+            Sex = _rnd.NextDouble();
+            Origin = AnimalOrigin.HallOfFame;
+            HallOfFameRank = hallOfFameRank;
+
+            // Clone genetics exactly — no crossover, no mutation
+            MovementEfficency = source.MovementEfficency;
+            VisionDistance = source.VisionDistance;
+            PregnancyGene = source.PregnancyGene;
+            ColorR = source.ColorR;
+            ColorG = source.ColorG;
+            ColorB = source.ColorB;
+
+            var net = SetupNetwork();
+            var cloneWeights = net.GetFNData().ToArray();
+            Debug.Assert(source.Weights.Length == cloneWeights.Length, "Clone and source must share identical topology");
+            for (int i = 0; i < cloneWeights.Length; i++)
+                cloneWeights[i].Weight = source.Weights[i];
+            net.SetFNData(cloneWeights);
         }
 
         public override void Update(double time)
@@ -822,6 +873,7 @@ namespace AiFun
             OnPropertyChanged(nameof(AvailableEnergy));
             OnPropertyChanged(nameof(IsDead));
             OnPropertyChanged(nameof(IsPregnant));
+            OnPropertyChanged(nameof(HallOfFameIndicatorColor));
         }
 
         private const double MaxSpeed = 20.0;
@@ -918,6 +970,7 @@ namespace AiFun
     {
         Random,
         Elite,
-        Natural
+        Natural,
+        HallOfFame
     }
 }

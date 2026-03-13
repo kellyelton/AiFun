@@ -42,6 +42,7 @@ public class TournamentSelectionTests
         eco.ElitePopulation = 6;
         eco.RandomPopulation = 4;
         eco.TournamentSize = 3;
+        eco.HallOfFameSize = 0;
         eco.FoodTargetCount = 0;
         eco.CorpseDecaySeconds = 0.5;
         eco.BaseEnergyDrainPerSecond = 0; // prevent energy loss from drain
@@ -71,6 +72,7 @@ public class TournamentSelectionTests
         eco.ElitePopulation = 2;
         eco.RandomPopulation = 1;
         eco.TournamentSize = 10; // Way more than the 3 dead creatures
+        eco.HallOfFameSize = 0;
         eco.FoodTargetCount = 0;
         eco.CorpseDecaySeconds = 0.5;
         eco.BaseEnergyDrainPerSecond = 0;

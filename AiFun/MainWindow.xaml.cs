@@ -85,6 +85,18 @@ namespace AiFun
         private bool _isPaused;
         private int _stepsPerFrame = 1;
         private bool _showVisionRays;
+        private bool _showHallOfFame = true;
+
+        public bool ShowHallOfFame
+        {
+            get { return _showHallOfFame; }
+            set
+            {
+                if (value == _showHallOfFame) return;
+                _showHallOfFame = value;
+                OnPropertyChanged();
+            }
+        }
 
         public MainWindow()
         {
@@ -123,6 +135,10 @@ namespace AiFun
             else if (keyEventArgs.Key == Key.V)
             {
                 ShowVisionRays = !ShowVisionRays;
+            }
+            else if (keyEventArgs.Key == Key.H)
+            {
+                ShowHallOfFame = !ShowHallOfFame;
             }
         }
 

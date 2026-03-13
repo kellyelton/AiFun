@@ -27,6 +27,13 @@
                 <Path Canvas.Left="10" Canvas.Top="5" StrokeThickness="1" Stroke="#CCFFAA00"
                       Data="{Binding VisionRaysCreature}"
                       Visibility="{Binding DataContext.ShowVisionRays, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVis}}"/>
+                <!-- Hall of Fame rank indicator — diamond glow behind body -->
+                <Polygon Canvas.Left="-2" Canvas.Top="-2" Points="7,0 14,7 7,14 0,7" StrokeThickness="0"
+                         Visibility="{Binding DataContext.ShowHallOfFame, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVis}}">
+                    <Polygon.Fill>
+                        <SolidColorBrush Color="{Binding HallOfFameIndicatorColor}"/>
+                    </Polygon.Fill>
+                </Polygon>
                 <!-- Creature body — fill from genetic color, stroke from origin -->
                 <Polygon Points="0,0 10,5 0,10" StrokeThickness="1.5">
                     <Polygon.Fill>
@@ -350,6 +357,10 @@
                         <Slider Style="{StaticResource HudSlider}" Minimum="0.01" Maximum="0.5" Value="{Binding Ecosystem.MutationStepSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.01"/>
                         <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.HiddenLayerSize, StringFormat='Hidden Layer Size ({0})'}"/>
                         <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="32" Value="{Binding Ecosystem.HiddenLayerSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.HallOfFameSize, StringFormat='Hall of Fame Size ({0})'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="0" Maximum="20" Value="{Binding Ecosystem.HallOfFameSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.HallOfFameGenerations, StringFormat='HoF Generations ({0})'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="0" Maximum="20" Value="{Binding Ecosystem.HallOfFameGenerations, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
                     </StackPanel>
                 </Expander>
 
@@ -388,6 +399,8 @@
                         <Slider Style="{StaticResource HudSlider}" Minimum="0" Maximum="5" Value="{Binding Ecosystem.VisionEnergyCostMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.01"/>
                         <CheckBox Style="{StaticResource HudCheck}" Margin="0,4,0,0" Content="Show Vision Rays (V)"
                                   IsChecked="{Binding ShowVisionRays, Mode=TwoWay}"/>
+                        <CheckBox Style="{StaticResource HudCheck}" Margin="0,4,0,0" Content="Show Hall of Fame (H)"
+                                  IsChecked="{Binding ShowHallOfFame, Mode=TwoWay}"/>
                     </StackPanel>
                 </Expander>
 

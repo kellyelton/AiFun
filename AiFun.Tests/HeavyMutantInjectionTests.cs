@@ -74,6 +74,7 @@ public class HeavyMutantInjectionTests
         eco.InitialPopulation = 10;
         eco.ElitePopulation = 5;
         eco.RandomPopulation = 5;
+        eco.HallOfFameSize = 0;
         eco.FoodTargetCount = 0;
         eco.CorpseDecaySeconds = 0.5;
         eco.BaseEnergyDrainPerSecond = 0;
@@ -106,6 +107,7 @@ public class HeavyMutantInjectionTests
         eco.InitialPopulation = 20;
         eco.ElitePopulation = 15;
         eco.RandomPopulation = 5;
+        eco.HallOfFameSize = 0;
         eco.FoodTargetCount = 0;
         eco.CorpseDecaySeconds = 0.5;
         eco.BaseEnergyDrainPerSecond = 0;

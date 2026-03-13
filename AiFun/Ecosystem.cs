@@ -13,6 +13,18 @@ using System.Collections.Specialized;
 
 namespace AiFun
 {
+    internal struct HallOfFameEntry
+    {
+        public double[] Weights;
+        public double MovementEfficency;
+        public double VisionDistance;
+        public double PregnancyGene;
+        public double ColorR;
+        public double ColorG;
+        public double ColorB;
+        public double Fitness;
+    }
+
     public class Ecosystem : INotifyPropertyChanged
     {
         private const int SpatialCellSize = 40;
@@ -206,6 +218,28 @@ namespace AiFun
             }
         }
 
+        public int HallOfFameSize
+        {
+            get { return _hallOfFameSize; }
+            set
+            {
+                if (value == _hallOfFameSize) return;
+                _hallOfFameSize = Math.Max(0, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public int HallOfFameGenerations
+        {
+            get { return _hallOfFameGenerations; }
+            set
+            {
+                if (value == _hallOfFameGenerations) return;
+                _hallOfFameGenerations = Math.Max(0, value);
+                OnPropertyChanged();
+            }
+        }
+
         public int FoodTargetCount
         {
             get { return _foodTargetCount; }
@@ -355,6 +389,7 @@ namespace AiFun
         }
 
         private List<AnimateObject> _deadObjects { get; set; }
+        private List<HallOfFameEntry[]> _hallOfFame = new List<HallOfFameEntry[]>();
         public ObservableCollection<GenerationStats> GenerationHistory { get; private set; }
         public double WorldWidth { get { return _worldWidth; } }
         public double WorldHeight { get { return _worldHeight; } }
@@ -379,6 +414,8 @@ namespace AiFun
         private double _mutationRate = 0.03;
         private double _mutationStepSize = 0.1;
         private int _tournamentSize = 5;
+        private int _hallOfFameSize = 5;
+        private int _hallOfFameGenerations = 5;
         private int _foodTargetCount = 150;
         private double _foodMinStartEnergy = 200;
         private double _foodMaxEnergy = 2000;
@@ -436,6 +473,7 @@ namespace AiFun
             _peakPopulation = 0;
             AnimateObjects.Clear();
             _deadObjects.Clear();
+            _hallOfFame.Clear();
             GenerationHistory.Clear();
             for (var i = 0; i < InitialPopulation; i++)
             {
@@ -471,6 +509,32 @@ namespace AiFun
                 });
             }
 
+            // Snapshot top performers for hall of fame before clearing
+            if (HallOfFameSize > 0 && HallOfFameGenerations > 0)
+            {
+                deadAnimals.Sort((a, b) => b.Fitness.CompareTo(a.Fitness));
+                var count = Math.Min(HallOfFameSize, deadAnimals.Count);
+                var entries = new HallOfFameEntry[count];
+                for (int i = 0; i < count; i++)
+                {
+                    var a = deadAnimals[i];
+                    entries[i] = new HallOfFameEntry
+                    {
+                        Weights = a.Brain.GetFNData().Select(f => f.Weight).ToArray(),
+                        MovementEfficency = a.MovementEfficency,
+                        VisionDistance = a.VisionDistance,
+                        PregnancyGene = a.PregnancyGene,
+                        ColorR = a.ColorR,
+                        ColorG = a.ColorG,
+                        ColorB = a.ColorB,
+                        Fitness = a.Fitness,
+                    };
+                }
+                _hallOfFame.Add(entries);
+                while (_hallOfFame.Count > HallOfFameGenerations)
+                    _hallOfFame.RemoveAt(0);
+            }
+
             AnimateObjects.Clear();
             _deadObjects.Clear();
             _peakPopulation = 0;
@@ -489,6 +553,16 @@ namespace AiFun
                 var donor = deadAnimals[_rnd.Next(deadAnimals.Count)];
                 var an = new Animal(this, donor, mutationMultiplier: 10.0);
                 AnimateObjects.Add(an);
+            }
+            // Spawn hall of fame clones
+            for (var g = 0; g < _hallOfFame.Count; g++)
+            {
+                var gen = _hallOfFame[g];
+                for (var i = 0; i < gen.Length; i++)
+                {
+                    var clone = new Animal(this, gen[i], hallOfFameRank: i + 1);
+                    AnimateObjects.Add(clone);
+                }
             }
             GenerationCount++;
             RaiseSummaryPropertyChanged();
