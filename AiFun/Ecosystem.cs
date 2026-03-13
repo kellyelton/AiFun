@@ -386,7 +386,7 @@ namespace AiFun
         private double _foodGrowthRate = 10;
         private double _foodBiteSize = 400;
 
-        public double SimulationTime { get; private set; }
+        public double SimulationTime { get; internal set; }
 
         private int _peakPopulation;
         private static Random _rnd = new Random();
@@ -670,22 +670,28 @@ namespace AiFun
                         continue;
                     }
                 }
-                foreach (var oan in AnimateObjects)
+                var loc = an.Location;
+                var minCX = (int)(loc.Left / SpatialCellSize);
+                var maxCX = (int)(loc.Right / SpatialCellSize);
+                var minCY = (int)(loc.Top / SpatialCellSize);
+                var maxCY = (int)(loc.Bottom / SpatialCellSize);
+                for (var cx = minCX; cx <= maxCX; cx++)
                 {
-                    if (an == oan) continue;
-                    //var r2 = new Rect(oan.Left, oan.Top, 5, 5);
-                    if (an.Location.IntersectsWith(oan.Location) == false) continue;
-                    if (an.Touching.Contains(oan) == false)
+                    for (var cy = minCY; cy <= maxCY; cy++)
                     {
-                        Trace.WriteLine("Got a touch");
-                        an.Touching.Add(oan);
+                        var key = ComposeSpatialKey(cx, cy);
+                        if (!_spatialIndex.TryGetValue(key, out var bucket)) continue;
+                        for (var bi = 0; bi < bucket.Count; bi++)
+                        {
+                            var oan = bucket[bi];
+                            if (an == oan) continue;
+                            if (loc.IntersectsWith(oan.Location) == false) continue;
+                            if (an.Touching.Contains(oan) == false)
+                                an.Touching.Add(oan);
+                            if (oan.Touching.Contains(an) == false)
+                                oan.Touching.Add(an);
+                        }
                     }
-                    if (oan.Touching.Contains(an) == false)
-                    {
-                        Trace.WriteLine("Got a touch");
-                        oan.Touching.Add(an);
-                    }
-
                 }
             }
             foreach (var an in AnimateObjects)
