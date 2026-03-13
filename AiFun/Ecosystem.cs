@@ -18,7 +18,7 @@ namespace AiFun
     {
         private const int SpatialCellSize = 40;
 
-        public ObservableCollection<AnimateObject> AnimateObjects { get; set; }
+        public SuppressibleObservableCollection<AnimateObject> AnimateObjects { get; set; }
 
         public int InitialPopulation
         {
@@ -322,7 +322,7 @@ namespace AiFun
         {
             _worldWidth = width;
             _worldHeight = height;
-            AnimateObjects = new ObservableCollection<AnimateObject>();
+            AnimateObjects = new SuppressibleObservableCollection<AnimateObject>();
             _deadObjects = new List<AnimateObject>();
             GenerationHistory = new ObservableCollection<GenerationStats>();
             AnimateObjects.CollectionChanged += (sender, args) =>
@@ -608,6 +608,9 @@ namespace AiFun
 
         public void RefreshUI()
         {
+            if (AnimateObjects.Count > _peakPopulation)
+                _peakPopulation = AnimateObjects.Count;
+            AnimateObjects.FlushSuppressedChanges();
             foreach (var obj in AnimateObjects)
             {
                 obj.RefreshBindings();

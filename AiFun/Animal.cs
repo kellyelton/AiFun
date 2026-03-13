@@ -565,6 +565,9 @@ namespace AiFun
             OnPropertyChanged(nameof(VisionRayDisplayLength));
             OnPropertyChanged(nameof(BodyColor));
             OnPropertyChanged(nameof(StrokeColor));
+            OnPropertyChanged(nameof(AvailableEnergy));
+            OnPropertyChanged(nameof(IsDead));
+            OnPropertyChanged(nameof(IsPregnant));
         }
 
         private static double NormalizeAngle(double angle)

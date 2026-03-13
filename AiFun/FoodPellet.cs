@@ -79,6 +79,14 @@ namespace AiFun
             // Food doesn't initiate interactions — animals eat food in Animal.HandleTouching
         }
 
+        internal override void RefreshBindings()
+        {
+            base.RefreshBindings();
+            OnPropertyChanged(nameof(Energy));
+            OnPropertyChanged(nameof(DisplaySize));
+            OnPropertyChanged(nameof(FillColor));
+        }
+
         /// <summary>
         /// Animal bites this pellet. Returns actual energy consumed.
         /// </summary>
