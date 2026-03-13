@@ -115,12 +115,10 @@ namespace AiFun
         /// WPF Geometry string for rendering all active vision rays as a single Path element.
         /// Built lazily in RefreshBindings to avoid per-tick allocation during suppressed steps.
         /// </summary>
-        public string VisionRaysGeometry { get; private set; } = "";
-
-        /// <summary>
-        /// Stroke brush for the vision rays — uses center ray's detection color.
-        /// </summary>
-        public string VisionRaysStroke { get; private set; } = "#44888888";
+        public string VisionRaysNone { get; private set; } = "";
+        public string VisionRaysWall { get; private set; } = "";
+        public string VisionRaysFood { get; private set; } = "";
+        public string VisionRaysCreature { get; private set; } = "";
 
         public double EatDesire
         {
@@ -620,8 +618,10 @@ namespace AiFun
         {
             if (RayResults == null || RayResults.Length == 0 || VisionDistance <= 0)
             {
-                VisionRaysGeometry = "";
-                VisionRaysStroke = "#44888888";
+                VisionRaysNone = "";
+                VisionRaysWall = "";
+                VisionRaysFood = "";
+                VisionRaysCreature = "";
                 return;
             }
 
@@ -631,8 +631,10 @@ namespace AiFun
             var effectiveVision = _effectiveVisionDistance;
             var pairsDisabled = (rayCount - _activeRayCount) / 2;
 
-            var sb = new System.Text.StringBuilder(rayCount * 30);
-            string centerColor = "#44888888";
+            var sbNone = new System.Text.StringBuilder(rayCount * 30);
+            var sbWall = new System.Text.StringBuilder(rayCount * 30);
+            var sbFood = new System.Text.StringBuilder(rayCount * 30);
+            var sbCreature = new System.Text.StringBuilder(rayCount * 30);
 
             for (int i = 0; i < rayCount; i++)
             {
@@ -654,21 +656,19 @@ namespace AiFun
                 var endX = Math.Cos(radians) * length;
                 var endY = Math.Sin(radians) * length;
 
-                // M 0,0 L endX,endY (move to origin, line to endpoint)
-                sb.AppendFormat(System.Globalization.CultureInfo.InvariantCulture,
+                var segment = string.Format(System.Globalization.CultureInfo.InvariantCulture,
                     "M 0,0 L {0:F1},{1:F1} ", endX, endY);
 
-                if (i == rayCount / 2)
-                {
-                    if (ray.ObjectType == 0.25) centerColor = "#CCFF4444";
-                    else if (ray.ObjectType == 1.0) centerColor = "#CCFFAA00";
-                    else if (ray.ObjectType == 0.75) centerColor = "#CC44CC44";
-                    else if (ray.ObjectType == 0.5) centerColor = "#CC00CC00";
-                }
+                if (ray.ObjectType == 0.25) sbWall.Append(segment);
+                else if (ray.ObjectType == 0.5) sbFood.Append(segment);
+                else if (ray.ObjectType >= 0.75) sbCreature.Append(segment);
+                else sbNone.Append(segment);
             }
 
-            VisionRaysGeometry = sb.ToString();
-            VisionRaysStroke = centerColor;
+            VisionRaysNone = sbNone.ToString();
+            VisionRaysWall = sbWall.ToString();
+            VisionRaysFood = sbFood.ToString();
+            VisionRaysCreature = sbCreature.ToString();
         }
 
         protected bool CanBreed(Animal other)
@@ -809,8 +809,10 @@ namespace AiFun
             base.RefreshBindings();
             BuildVisionRaysGeometry();
             OnPropertyChanged(nameof(LookingAngle));
-            OnPropertyChanged(nameof(VisionRaysGeometry));
-            OnPropertyChanged(nameof(VisionRaysStroke));
+            OnPropertyChanged(nameof(VisionRaysNone));
+            OnPropertyChanged(nameof(VisionRaysWall));
+            OnPropertyChanged(nameof(VisionRaysFood));
+            OnPropertyChanged(nameof(VisionRaysCreature));
             OnPropertyChanged(nameof(BodyColor));
             OnPropertyChanged(nameof(StrokeColor));
             OnPropertyChanged(nameof(DesireIndicatorColor));

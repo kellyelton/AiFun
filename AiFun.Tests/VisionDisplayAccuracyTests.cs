@@ -24,6 +24,17 @@ public class VisionDisplayAccuracyTests
         return animal;
     }
 
+    /// <summary>
+    /// Combines all 4 per-color geometry strings into one for segment counting.
+    /// </summary>
+    private string GetAllGeometry(Animal animal)
+    {
+        return (animal.VisionRaysNone ?? "") +
+               (animal.VisionRaysWall ?? "") +
+               (animal.VisionRaysFood ?? "") +
+               (animal.VisionRaysCreature ?? "");
+    }
+
     // ---------- Test 1: Cached values match computed values after UpdateVision() ----------
 
     [Fact]
@@ -91,7 +102,7 @@ public class VisionDisplayAccuracyTests
         animal.UpdateVision();
         animal.RefreshBindings();
 
-        var segmentCount = CountGeometrySegments(animal.VisionRaysGeometry);
+        var segmentCount = CountGeometrySegments(GetAllGeometry(animal));
         Assert.Equal(5, animal._activeRayCount);
         Assert.True(animal._activeRayCount == segmentCount,
             $"Geometry has {segmentCount} segments but _activeRayCount is {animal._activeRayCount}");
@@ -114,7 +125,7 @@ public class VisionDisplayAccuracyTests
         animal.UpdateVision();
         animal.RefreshBindings();
 
-        var segmentCount = CountGeometrySegments(animal.VisionRaysGeometry);
+        var segmentCount = CountGeometrySegments(GetAllGeometry(animal));
         Assert.Equal(3, animal._activeRayCount);
         Assert.True(animal._activeRayCount == segmentCount,
             $"Geometry has {segmentCount} segments but _activeRayCount is {animal._activeRayCount}");
@@ -137,7 +148,7 @@ public class VisionDisplayAccuracyTests
         animal.UpdateVision();
         animal.RefreshBindings();
 
-        var segmentCount = CountGeometrySegments(animal.VisionRaysGeometry);
+        var segmentCount = CountGeometrySegments(GetAllGeometry(animal));
         Assert.Equal(1, animal._activeRayCount);
         Assert.True(animal._activeRayCount == segmentCount,
             $"Geometry has {segmentCount} segments but _activeRayCount is {animal._activeRayCount}");
@@ -203,7 +214,7 @@ public class VisionDisplayAccuracyTests
         // RefreshBindings will build geometry from CACHED values (stale -- from speed 0)
         animal.RefreshBindings();
 
-        var segmentCount = CountGeometrySegments(animal.VisionRaysGeometry);
+        var segmentCount = CountGeometrySegments(GetAllGeometry(animal));
         // Geometry should have 5 segments (from cached values at speed 0)
         // even though current Speed is 20 (which would give 1 ray)
         Assert.Equal(5, segmentCount);
@@ -277,8 +288,6 @@ public class VisionDisplayAccuracyTests
         sprinter.UpdateVision();
 
         // Both should have heavily reduced vision
-        // Spinner: combined fraction 1.0 -> 1 ray, 50px vision
-        // Sprinter: combined fraction 0.9 -> 1 ray, 65px vision
         Assert.Equal(1, spinner._activeRayCount);
         Assert.Equal(1, sprinter._activeRayCount);
 
@@ -290,8 +299,8 @@ public class VisionDisplayAccuracyTests
         spinner.RefreshBindings();
         sprinter.RefreshBindings();
 
-        var spinnerSegments = CountGeometrySegments(spinner.VisionRaysGeometry);
-        var sprinterSegments = CountGeometrySegments(sprinter.VisionRaysGeometry);
+        var spinnerSegments = CountGeometrySegments(GetAllGeometry(spinner));
+        var sprinterSegments = CountGeometrySegments(GetAllGeometry(sprinter));
 
         Assert.Equal(1, spinnerSegments);
         Assert.Equal(1, sprinterSegments);
@@ -335,7 +344,7 @@ public class VisionDisplayAccuracyTests
         // Now call RefreshBindings and verify geometry matches
         animal.RefreshBindings();
 
-        var segmentCount = CountGeometrySegments(animal.VisionRaysGeometry);
+        var segmentCount = CountGeometrySegments(GetAllGeometry(animal));
         Assert.True(expectedRays == segmentCount,
             $"Geometry segments ({segmentCount}) should match _activeRayCount ({expectedRays}) after batched updates");
     }
@@ -359,14 +368,14 @@ public class VisionDisplayAccuracyTests
         animal.Speed = 0;
         animal.UpdateVision();
         animal.RefreshBindings();
-        var geometryAtZeroSpeed = animal.VisionRaysGeometry;
+        var geometryAtZeroSpeed = GetAllGeometry(animal);
         var maxLengthAtZero = ExtractMaxRayLength(geometryAtZeroSpeed);
 
         // At speed 20: effectiveVision = 50, ray with no hit -> length = 50
         animal.Speed = 20;
         animal.UpdateVision();
         animal.RefreshBindings();
-        var geometryAtMaxSpeed = animal.VisionRaysGeometry;
+        var geometryAtMaxSpeed = GetAllGeometry(animal);
         var maxLengthAtMax = ExtractMaxRayLength(geometryAtMaxSpeed);
 
         Assert.True(maxLengthAtZero > maxLengthAtMax,
@@ -379,6 +388,54 @@ public class VisionDisplayAccuracyTests
             Assert.True(ratio > 3.0 && ratio < 5.0,
                 $"Ray length ratio should be ~4x, got {ratio:F1}");
         }
+    }
+
+    // ---------- Test 9: Per-ray coloring ----------
+
+    [Fact]
+    public void Wall_hit_ray_goes_into_VisionRaysWall_geometry()
+    {
+        var eco = CreateEcosystem(200, 200);
+        eco.VisionRayCount = 1;
+        eco.VisionFieldOfView = 120;
+        var animal = CreateAnimalAt(eco, 5, 100);
+        animal.LookingAngle = 180; // facing left wall
+        animal.VisionDistance = 200;
+        animal.Speed = 0;
+
+        eco.AnimateObjects.Clear();
+        eco.AnimateObjects.Add(animal);
+
+        animal.UpdateVision();
+        animal.RefreshBindings();
+
+        Assert.True(CountGeometrySegments(animal.VisionRaysWall) == 1,
+            "Ray hitting wall should be in VisionRaysWall");
+        Assert.True(CountGeometrySegments(animal.VisionRaysNone) == 0,
+            "No rays should be in VisionRaysNone when hitting wall");
+    }
+
+    [Fact]
+    public void No_hit_ray_goes_into_VisionRaysNone_geometry()
+    {
+        var eco = CreateEcosystem(2000, 2000);
+        eco.VisionRayCount = 1;
+        eco.VisionFieldOfView = 120;
+        var animal = CreateAnimalAt(eco, 1000, 1000);
+        animal.LookingAngle = 0;
+        animal.VisionDistance = 50; // short, won't reach walls
+
+        eco.AnimateObjects.Clear();
+        eco.AnimateObjects.Add(animal);
+
+        animal.Speed = 0;
+        animal.UpdateVision();
+        animal.RefreshBindings();
+
+        Assert.True(CountGeometrySegments(animal.VisionRaysNone) == 1,
+            "Ray hitting nothing should be in VisionRaysNone");
+        Assert.True(CountGeometrySegments(animal.VisionRaysWall) == 0,
+            "No rays should be in VisionRaysWall when hitting nothing");
     }
 
     // ---------- Helper methods ----------

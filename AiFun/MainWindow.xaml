@@ -14,14 +14,19 @@
                 <Canvas.RenderTransform>
                     <RotateTransform Angle="{Binding LookingAngle}" CenterX="5" CenterY="5"/>
                 </Canvas.RenderTransform>
-                <!-- Vision rays — single Path element drawing all rays as line segments -->
-                <Path Canvas.Left="10" Canvas.Top="5" StrokeThickness="1"
-                      Data="{Binding VisionRaysGeometry}"
-                      Visibility="{Binding DataContext.ShowVisionRays, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVis}}">
-                    <Path.Stroke>
-                        <SolidColorBrush Color="{Binding VisionRaysStroke}"/>
-                    </Path.Stroke>
-                </Path>
+                <!-- Vision rays — one Path per detection type for per-ray coloring -->
+                <Path Canvas.Left="10" Canvas.Top="5" StrokeThickness="1" Stroke="#44888888"
+                      Data="{Binding VisionRaysNone}"
+                      Visibility="{Binding DataContext.ShowVisionRays, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVis}}"/>
+                <Path Canvas.Left="10" Canvas.Top="5" StrokeThickness="1" Stroke="#CCFF4444"
+                      Data="{Binding VisionRaysWall}"
+                      Visibility="{Binding DataContext.ShowVisionRays, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVis}}"/>
+                <Path Canvas.Left="10" Canvas.Top="5" StrokeThickness="1" Stroke="#CC00CC00"
+                      Data="{Binding VisionRaysFood}"
+                      Visibility="{Binding DataContext.ShowVisionRays, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVis}}"/>
+                <Path Canvas.Left="10" Canvas.Top="5" StrokeThickness="1" Stroke="#CCFFAA00"
+                      Data="{Binding VisionRaysCreature}"
+                      Visibility="{Binding DataContext.ShowVisionRays, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVis}}"/>
                 <!-- Creature body — fill from genetic color, stroke from origin -->
                 <Polygon Points="0,0 10,5 0,10" StrokeThickness="1.5">
                     <Polygon.Fill>
