@@ -111,6 +111,11 @@ namespace AiFun
 
         public RayResult[] RayResults { get; private set; }
 
+        /// <summary>
+        /// Display data for all active vision rays, consumed by the XAML ItemsControl.
+        /// </summary>
+        public RayDisplayItem[] RayDisplayItems { get; private set; } = Array.Empty<RayDisplayItem>();
+
         public double EatDesire
         {
             get { return _eatDesire; }
@@ -618,8 +623,54 @@ namespace AiFun
                     centerHitObject = result.HitObject;
             }
 
+            // Build ray display data for UI rendering
+            BuildRayDisplayItems(rayCount, fov, effectiveVision, pairsDisabled);
+
             // Update FocusingObject from center ray (already computed in loop)
             FocusingObject = centerHitObject;
+        }
+
+        private void BuildRayDisplayItems(int rayCount, double fov, double effectiveVision, int pairsDisabled)
+        {
+            var halfFov = fov / 2.0;
+            int activeCount = 0;
+
+            // Count active rays first to size the array
+            for (int i = 0; i < rayCount; i++)
+            {
+                bool isDisabled = i < pairsDisabled || i >= rayCount - pairsDisabled;
+                if (rayCount == 1) isDisabled = false;
+                if (!isDisabled) activeCount++;
+            }
+
+            var items = new RayDisplayItem[activeCount];
+            int idx = 0;
+            for (int i = 0; i < rayCount; i++)
+            {
+                bool isDisabled = i < pairsDisabled || i >= rayCount - pairsDisabled;
+                if (rayCount == 1) isDisabled = false;
+                if (isDisabled) continue;
+
+                double angleOffset;
+                if (rayCount == 1)
+                    angleOffset = 0;
+                else
+                    angleOffset = -halfFov + (fov * i / (rayCount - 1));
+
+                var ray = RayResults[i];
+                double length = effectiveVision * (1.0 - ray.ObjectDistance);
+
+                string color;
+                if (ray.ObjectType == 0.25) color = "#CCFF4444";       // wall
+                else if (ray.ObjectType == 1.0) color = "#CCFFAA00";   // alive creature
+                else if (ray.ObjectType == 0.75) color = "#CC44CC44";  // dead creature
+                else if (ray.ObjectType == 0.5) color = "#CC00CC00";   // food
+                else color = "#44888888";                               // nothing
+
+                items[idx] = new RayDisplayItem { Angle = angleOffset, Length = length, Color = color };
+                idx++;
+            }
+            RayDisplayItems = items;
         }
 
         protected bool CanBreed(Animal other)
@@ -761,6 +812,7 @@ namespace AiFun
             OnPropertyChanged(nameof(LookingAngle));
             OnPropertyChanged(nameof(VisionRayColor));
             OnPropertyChanged(nameof(VisionRayDisplayLength));
+            OnPropertyChanged(nameof(RayDisplayItems));
             OnPropertyChanged(nameof(BodyColor));
             OnPropertyChanged(nameof(StrokeColor));
             OnPropertyChanged(nameof(DesireIndicatorColor));

@@ -35,4 +35,15 @@ namespace AiFun
         /// </summary>
         public double ObjectEnergy;
     }
+
+    /// <summary>
+    /// Lightweight display data for a single vision ray, used by the UI DataTemplate.
+    /// Angle is relative to the creature's heading (0 = straight ahead).
+    /// </summary>
+    public class RayDisplayItem
+    {
+        public double Angle { get; set; }
+        public double Length { get; set; }
+        public string Color { get; set; }
+    }
 }

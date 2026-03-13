@@ -14,14 +14,33 @@
                 <Canvas.RenderTransform>
                     <RotateTransform Angle="{Binding LookingAngle}" CenterX="5" CenterY="5"/>
                 </Canvas.RenderTransform>
-                <!-- Vision ray — extends from creature nose along heading -->
-                <Rectangle Canvas.Left="10" Canvas.Top="4.5"
-                           Width="{Binding VisionRayDisplayLength}" Height="1"
-                           Visibility="{Binding DataContext.ShowVisionRays, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVis}}">
-                    <Rectangle.Fill>
-                        <SolidColorBrush Color="{Binding VisionRayColor}"/>
-                    </Rectangle.Fill>
-                </Rectangle>
+                <!-- Vision rays — one per active ray, each rotated by its offset angle -->
+                <ItemsControl ItemsSource="{Binding RayDisplayItems}"
+                              Visibility="{Binding DataContext.ShowVisionRays, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVis}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type aiFun:RayDisplayItem}">
+                            <Rectangle Width="{Binding Length}" Height="1">
+                                <Rectangle.Fill>
+                                    <SolidColorBrush Color="{Binding Color}"/>
+                                </Rectangle.Fill>
+                                <Rectangle.RenderTransform>
+                                    <RotateTransform Angle="{Binding Angle}" CenterX="0" CenterY="0.5"/>
+                                </Rectangle.RenderTransform>
+                            </Rectangle>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="10"/>
+                            <Setter Property="Canvas.Top" Value="4.5"/>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                </ItemsControl>
                 <!-- Creature body — fill from genetic color, stroke from origin -->
                 <Polygon Points="0,0 10,5 0,10" StrokeThickness="1.5">
                     <Polygon.Fill>
