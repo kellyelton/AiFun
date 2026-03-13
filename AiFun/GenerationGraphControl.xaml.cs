@@ -111,7 +111,7 @@ namespace AiFun
             };
 
             // Collect end label positions, then resolve overlaps
-            var endLabels = new List<(double y, double value, Color color)>();
+            var endLabels = new List<(double y, double value, Color color, int trend)>();
 
             foreach (var (key, selector, thickness) in seriesDefs)
             {
@@ -126,14 +126,15 @@ namespace AiFun
 
                 var lastValue = values[values.Count - 1];
                 var y = h - ((lastValue / seriesMax) * h);
-                endLabels.Add((y, lastValue, SeriesColors[key]));
+                var trend = ComputeTrend(values);
+                endLabels.Add((y, lastValue, SeriesColors[key], trend));
             }
 
             // Resolve overlapping labels by pushing them apart
             ResolveEndLabelOverlaps(endLabels, h);
 
-            foreach (var (y, value, color) in endLabels)
-                DrawEndLabel(value, color, w, y);
+            foreach (var (y, value, color, trend) in endLabels)
+                DrawEndLabel(value, color, w, y, trend);
         }
 
         private void DrawGridLines(double w, double h, List<GenerationStats> stats)
@@ -230,7 +231,7 @@ namespace AiFun
             }
         }
 
-        private void ResolveEndLabelOverlaps(List<(double y, double value, Color color)> labels, double chartHeight)
+        private void ResolveEndLabelOverlaps(List<(double y, double value, Color color, int trend)> labels, double chartHeight)
         {
             const double labelHeight = 14.0;
 
@@ -244,8 +245,8 @@ namespace AiFun
                 if (gap < labelHeight)
                 {
                     var push = (labelHeight - gap) / 2.0;
-                    labels[i - 1] = (labels[i - 1].y - push, labels[i - 1].value, labels[i - 1].color);
-                    labels[i] = (labels[i].y + push, labels[i].value, labels[i].color);
+                    labels[i - 1] = (labels[i - 1].y - push, labels[i - 1].value, labels[i - 1].color, labels[i - 1].trend);
+                    labels[i] = (labels[i].y + push, labels[i].value, labels[i].color, labels[i].trend);
 
                     // Ripple upward if we pushed the previous one into another
                     for (int j = i - 1; j > 0; j--)
@@ -253,7 +254,7 @@ namespace AiFun
                         var gapAbove = labels[j].y - labels[j - 1].y;
                         if (gapAbove < labelHeight)
                         {
-                            labels[j - 1] = (labels[j].y - labelHeight, labels[j - 1].value, labels[j - 1].color);
+                            labels[j - 1] = (labels[j].y - labelHeight, labels[j - 1].value, labels[j - 1].color, labels[j - 1].trend);
                         }
                         else break;
                     }
@@ -264,22 +265,52 @@ namespace AiFun
             for (int i = 0; i < labels.Count; i++)
             {
                 var y = Math.Max(0, Math.Min(chartHeight - labelHeight, labels[i].y));
-                labels[i] = (y, labels[i].value, labels[i].color);
+                labels[i] = (y, labels[i].value, labels[i].color, labels[i].trend);
             }
         }
 
-        private void DrawEndLabel(double value, Color color, double w, double y)
+        private static int ComputeTrend(List<double> values)
         {
-            var label = new TextBlock
+            if (values.Count < 2) return 0;
+            var lookback = Math.Min(10, values.Count - 1);
+            var previous = values.Skip(values.Count - 1 - lookback).Take(lookback).Average();
+            var current = values[values.Count - 1];
+            var threshold = Math.Max(previous * 0.01, 0.001); // 1% change threshold
+            if (current > previous + threshold) return 1;  // trending up
+            if (current < previous - threshold) return -1; // trending down
+            return 0; // flat
+        }
+
+        private void DrawEndLabel(double value, Color color, double w, double y, int trend)
+        {
+            var trendText = trend > 0 ? " \u25B2" : trend < 0 ? " \u25BC" : "";
+            var trendColor = trend > 0 ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54);
+
+            var panel = new StackPanel { Orientation = Orientation.Horizontal };
+
+            panel.Children.Add(new TextBlock
             {
                 Text = FormatValue(value),
                 Foreground = new SolidColorBrush(color),
                 FontSize = 9,
                 FontWeight = System.Windows.FontWeights.SemiBold
-            };
-            Canvas.SetLeft(label, w + 3);
-            Canvas.SetTop(label, y - 7);
-            ChartCanvas.Children.Add(label);
+            });
+
+            if (trend != 0)
+            {
+                panel.Children.Add(new TextBlock
+                {
+                    Text = trendText,
+                    Foreground = new SolidColorBrush(trendColor),
+                    FontSize = 8,
+                    FontWeight = System.Windows.FontWeights.Bold,
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+            }
+
+            Canvas.SetLeft(panel, w + 3);
+            Canvas.SetTop(panel, y - 7);
+            ChartCanvas.Children.Add(panel);
         }
 
         private static string FormatValue(double value)
