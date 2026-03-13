@@ -280,6 +280,12 @@ namespace AiFun
         public double OthersEaten { get; set; }
         public double FoodEaten { get; set; }
 
+        // Recurrent memory inputs — previous tick's outputs fed back as inputs
+        public double PrevSpeed { get; internal set; } = 0.5;
+        public double PrevTurnDelta { get; internal set; } = 0.5;
+        public double PrevEatDesire { get; internal set; } = 0.5;
+        public double PrevBreedDesire { get; internal set; } = 0.5;
+
         // Genetic color channels [0, 1] — inherited via crossover
         public double ColorR { get; private set; }
         public double ColorG { get; private set; }
@@ -437,6 +443,12 @@ namespace AiFun
             // Pregnancy energy drain
             if (IsPregnant)
                 AvailableEnergy -= _eco.PregnancyEnergyCostMultiplier * time;
+
+            // Store current outputs for recurrent memory on next tick
+            PrevSpeed = Speed;
+            PrevTurnDelta = TurnDeltaPerTick;
+            PrevEatDesire = EatDesire;
+            PrevBreedDesire = BreedDesire;
         }
 
         public override void HandleTouching()
@@ -651,6 +663,12 @@ namespace AiFun
                 _mapper.MapInputFunc(() => RayResults[rayIndex].ObjectDistance);
                 _mapper.MapInputFunc(() => RayResults[rayIndex].ObjectEnergy);
             }
+
+            // Recurrent memory inputs: previous tick's outputs fed back as inputs
+            _mapper.MapInput(x => x.PrevSpeed, x => x.Clamp(0, 20).NormalizeToUnit(0, 20));
+            _mapper.MapInput(x => x.PrevTurnDelta, x => ((x.Clamp(-10, 10) + 10) / 20));
+            _mapper.MapInputFunc(() => PrevEatDesire);
+            _mapper.MapInputFunc(() => PrevBreedDesire);
 
             // Output audit:
             // Speed: allow stop and slow movement, but with enough upper range to be visible -> [0,20]

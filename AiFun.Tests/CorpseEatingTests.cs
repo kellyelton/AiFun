@@ -296,7 +296,7 @@ public class CorpseEatingTests
         var eco = CreateEcosystem();
         var animal = new Animal(eco);
 
-        // 2 base + 5*3 ray inputs = 17
-        Assert.Equal(17, animal.Brain.InputCount);
+        // 2 base + 5*3 ray inputs + 4 recurrent = 21
+        Assert.Equal(21, animal.Brain.InputCount);
     }
 }

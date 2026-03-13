@@ -246,7 +246,7 @@ Creatures that evolve to sprint blindly will miss food. Creatures that creep eve
 ---
 
 ### Step 8: Recurrent Memory Inputs
-**Status:** Not started
+**Status:** Done
 **Effort:** Small–Medium | **Impact:** 🔥🔥🔥🔥
 
 Even with multi-ray vision, the neural network is pure feedforward — every tick is a completely fresh decision with zero context from the previous tick. A creature that saw food to its right and started turning has no memory that it was turning. Next tick, if the food leaves its vision cone, it stops turning. It can never sustain a behavior across ticks.

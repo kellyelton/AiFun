@@ -11,10 +11,10 @@ public class VisionInputTests
         var eco = new Ecosystem(2000, 2000);
         var animal = new Animal(eco);
 
-        // 2 base inputs (AvailableEnergy, LookingAngle) + 5 rays * 3 per-ray = 17
+        // 2 base inputs (AvailableEnergy, LookingAngle) + 5 rays * 3 per-ray + 4 recurrent = 21
         // 4 outputs: Speed, TurnDeltaPerTick, EatDesire, BreedDesire
         var brain = animal.Brain;
-        Assert.Equal(17, brain.InputCount);
+        Assert.Equal(21, brain.InputCount);
         Assert.Equal(4, brain.OutputCount);
     }
 

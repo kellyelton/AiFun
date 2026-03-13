@@ -103,8 +103,8 @@ public class FoodIntegrationTests
         eco.VisionRayCount = 5;
         var animal = new Animal(eco);
 
-        // 2 base + 5*3 = 17
-        Assert.Equal(17, animal.Brain.InputCount);
+        // 2 base + 5*3 + 4 recurrent = 21
+        Assert.Equal(21, animal.Brain.InputCount);
         Assert.Equal(4, animal.Brain.OutputCount);
     }
 

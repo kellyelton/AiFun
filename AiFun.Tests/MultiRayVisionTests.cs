@@ -119,8 +119,8 @@ public class MultiRayVisionTests
         eco.VisionRayCount = 5;
         var animal = new Animal(eco);
 
-        // 2 (energy, angle) + 5*3 (ray data) = 17
-        Assert.Equal(17, animal.Brain.InputCount);
+        // 2 (energy, angle) + 5*3 (ray data) + 4 (recurrent memory) = 21
+        Assert.Equal(21, animal.Brain.InputCount);
         Assert.Equal(4, animal.Brain.OutputCount);
     }
 
@@ -131,8 +131,8 @@ public class MultiRayVisionTests
         eco.VisionRayCount = 3;
         var animal = new Animal(eco);
 
-        // 2 + 3*3 = 11
-        Assert.Equal(11, animal.Brain.InputCount);
+        // 2 + 3*3 + 4 = 15
+        Assert.Equal(15, animal.Brain.InputCount);
     }
 
     [Fact]
@@ -142,8 +142,8 @@ public class MultiRayVisionTests
         eco.VisionRayCount = 7;
         var animal = new Animal(eco);
 
-        // 2 + 7*3 = 23
-        Assert.Equal(23, animal.Brain.InputCount);
+        // 2 + 7*3 + 4 = 27
+        Assert.Equal(27, animal.Brain.InputCount);
     }
 
     // --- Multi-ray vision detection ---

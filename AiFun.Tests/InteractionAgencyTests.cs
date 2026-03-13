@@ -35,8 +35,8 @@ public class InteractionAgencyTests
         var eco = CreateEcosystem();
         var animal = new Animal(eco);
 
-        // 2 base + 5*3 rays = 17
-        Assert.Equal(17, animal.Brain.InputCount);
+        // 2 base + 5*3 rays + 4 recurrent = 21
+        Assert.Equal(21, animal.Brain.InputCount);
     }
 
     // --- EatDesire / BreedDesire properties exist and are in [0, 1] ---
