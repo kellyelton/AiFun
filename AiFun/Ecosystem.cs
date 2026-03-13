@@ -75,13 +75,35 @@ namespace AiFun
             }
         }
 
-        public double PregnancyDurationSeconds
+        public double MinPregnancyDuration
         {
-            get { return _pregnancyDurationSeconds; }
+            get { return _minPregnancyDuration; }
             set
             {
-                if (value.Equals(_pregnancyDurationSeconds)) return;
-                _pregnancyDurationSeconds = Math.Max(0.5, value);
+                if (value.Equals(_minPregnancyDuration)) return;
+                _minPregnancyDuration = Math.Max(0.5, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public double MaxPregnancyDuration
+        {
+            get { return _maxPregnancyDuration; }
+            set
+            {
+                if (value.Equals(_maxPregnancyDuration)) return;
+                _maxPregnancyDuration = Math.Max(1, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public double PregnancyEnergyCostMultiplier
+        {
+            get { return _pregnancyEnergyCostMultiplier; }
+            set
+            {
+                if (value.Equals(_pregnancyEnergyCostMultiplier)) return;
+                _pregnancyEnergyCostMultiplier = Math.Max(0, value);
                 OnPropertyChanged();
             }
         }
@@ -222,6 +244,7 @@ namespace AiFun
                 {
                     a => a.MovementEfficency,
                     a => a.VisionDistance,
+                    a => a.PregnancyGene,
                     a => a.ColorR,
                     a => a.ColorG,
                     a => a.ColorB,
@@ -301,7 +324,9 @@ namespace AiFun
         private int _randomPopulation = 25;
         private double _baseEnergyDrainPerSecond = 100;
         private double _movementEnergyCostMultiplier = 10;
-        private double _pregnancyDurationSeconds = 5;
+        private double _minPregnancyDuration = 2;
+        private double _maxPregnancyDuration = 20;
+        private double _pregnancyEnergyCostMultiplier = 50;
         private double _corpseDecaySeconds = 10;
         private double _maxVisionDistance = 300;
         private double _visionEnergyCostMultiplier = 0.5;
@@ -548,7 +573,7 @@ namespace AiFun
                         continue;
                     }
                     var anim = an as Animal;
-                    if (anim.IsPregnant && (SimulationTime - anim.TimeImpregnated) >= PregnancyDurationSeconds && anim.IsDead == false)
+                    if (anim.IsPregnant && (SimulationTime - anim.TimeImpregnated) >= anim.PregnancyDuration && anim.IsDead == false)
                     {
                         Trace.WriteLine("Popped a baby");
                         AnimateObjects.Add(anim.PopBaby());

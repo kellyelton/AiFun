@@ -223,7 +223,7 @@ Currently `CanBreed()` blocks breeding entirely when pregnant. Updated behavior:
 ---
 
 ### Step 4: Genetic Pregnancy Duration
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 **Effort:** Small | **Impact:** 🔥
 
 Currently `PregnancyDurationSeconds` is a single ecosystem-wide constant. Make it a per-creature genetic trait so creatures evolve their own gestation period.

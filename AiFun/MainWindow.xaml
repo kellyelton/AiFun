@@ -353,8 +353,12 @@
                         <Slider Style="{StaticResource HudSlider}" Minimum="10" Maximum="500" Value="{Binding Ecosystem.BaseEnergyDrainPerSecond, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBlock Style="{StaticResource HudLabel}" Text="Movement Cost"/>
                         <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="50" Value="{Binding Ecosystem.MovementEnergyCostMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Style="{StaticResource HudLabel}" Text="Pregnancy (s)"/>
-                        <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="20" Value="{Binding Ecosystem.PregnancyDurationSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.MinPregnancyDuration, StringFormat='Min Pregnancy ({0:F1}s)'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="0.5" Maximum="30" Value="{Binding Ecosystem.MinPregnancyDuration, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.MaxPregnancyDuration, StringFormat='Max Pregnancy ({0:F1}s)'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="60" Value="{Binding Ecosystem.MaxPregnancyDuration, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.PregnancyEnergyCostMultiplier, StringFormat='Pregnancy Energy Cost ({0:F0})'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="0" Maximum="200" Value="{Binding Ecosystem.PregnancyEnergyCostMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBlock Style="{StaticResource HudLabel}" Text="Corpse Decay (s)"/>
                         <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="30" Value="{Binding Ecosystem.CorpseDecaySeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
