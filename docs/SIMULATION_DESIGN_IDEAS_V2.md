@@ -512,7 +512,7 @@ Remove `TopBreeders` parameter (no longer needed).
 ---
 
 ### Step 15: Reduce Random Population Waste
-**Status:** Not started
+**Status:** Done
 **Effort:** Trivial | **Impact:** 🔥
 
 25% of each generation (25 creatures) are fully random — random weights, random traits. These creatures almost always die immediately, contributing nothing to the gene pool. They exist to add diversity, but they're too different from the evolved population to survive long enough to breed.

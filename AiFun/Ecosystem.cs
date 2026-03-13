@@ -365,7 +365,7 @@ namespace AiFun
         private int _generationCount;
         private int _initialPopulation = 100;
         private int _elitePopulation = 75;
-        private int _randomPopulation = 25;
+        private int _randomPopulation = 10;
         private double _baseEnergyDrainPerSecond = 30;
         private double _movementEnergyCostMultiplier = 3;
         private double _minPregnancyDuration = 2;
@@ -487,7 +487,8 @@ namespace AiFun
             }
             for (var i = 0; i < RandomPopulation; i++)
             {
-                var an = new Animal(this);
+                var donor = deadAnimals[_rnd.Next(deadAnimals.Count)];
+                var an = new Animal(this, donor, mutationMultiplier: 10.0);
                 AnimateObjects.Add(an);
             }
             GenerationCount++;
