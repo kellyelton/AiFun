@@ -382,9 +382,9 @@ namespace AiFun
         private int _tournamentSize = 5;
         private int _foodTargetCount = 150;
         private double _foodMinStartEnergy = 200;
-        private double _foodMaxEnergy = 500;
-        private double _foodGrowthRate = 30;
-        private double _foodBiteSize = 100;
+        private double _foodMaxEnergy = 2000;
+        private double _foodGrowthRate = 10;
+        private double _foodBiteSize = 400;
 
         public double SimulationTime { get; private set; }
 

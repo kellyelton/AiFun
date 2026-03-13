@@ -24,10 +24,24 @@ public class EnergyEconomicsDefaultsTests
     }
 
     [Fact]
-    public void FoodGrowthRate_defaults_to_30()
+    public void FoodGrowthRate_defaults_to_10()
     {
         var eco = CreateEcosystem();
-        Assert.Equal(30, eco.FoodGrowthRate);
+        Assert.Equal(10, eco.FoodGrowthRate);
+    }
+
+    [Fact]
+    public void FoodMaxEnergy_defaults_to_2000()
+    {
+        var eco = CreateEcosystem();
+        Assert.Equal(2000, eco.FoodMaxEnergy);
+    }
+
+    [Fact]
+    public void FoodBiteSize_defaults_to_400()
+    {
+        var eco = CreateEcosystem();
+        Assert.Equal(400, eco.FoodBiteSize);
     }
 
     [Fact]
