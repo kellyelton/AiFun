@@ -31,8 +31,12 @@
                         <SolidColorBrush Color="{Binding StrokeColor}"/>
                     </Polygon.Stroke>
                 </Polygon>
-                <!-- Forward marker (nose dot) -->
-                <Ellipse Canvas.Left="9" Canvas.Top="4" Width="2" Height="2" Fill="#FFE53935"/>
+                <!-- Forward marker (nose dot) — color reflects dominant desire -->
+                <Ellipse Canvas.Left="9" Canvas.Top="3" Width="4" Height="4">
+                    <Ellipse.Fill>
+                        <SolidColorBrush Color="{Binding DesireIndicatorColor}"/>
+                    </Ellipse.Fill>
+                </Ellipse>
             </Canvas>
         </DataTemplate>
 

@@ -103,7 +103,7 @@ public class FoodIntegrationTests
 
         // 6 original + FoodAhead + FoodEnergyAhead = 8
         Assert.Equal(8, animal.Brain.InputCount);
-        Assert.Equal(2, animal.Brain.OutputCount);
+        Assert.Equal(4, animal.Brain.OutputCount);
     }
 
     // --- Animal eating food ---

@@ -6,7 +6,7 @@ namespace AiFun.Tests;
 public class VisionInputTests
 {
     [Fact]
-    public void Network_has_8_inputs_and_2_outputs()
+    public void Network_has_8_inputs_and_4_outputs()
     {
         var eco = new Ecosystem(2000, 2000);
         var animal = new Animal(eco);
@@ -14,10 +14,10 @@ public class VisionInputTests
         // 8 inputs: AvailableEnergy, LookingAngle, WallAhead,
         // AliveCreatureAhead, DeadCreatureAhead, FoodAhead, FoodEnergyAhead,
         // DistanceToObjectAhead
-        // 2 outputs: Speed, TurnDeltaPerTick
+        // 4 outputs: Speed, TurnDeltaPerTick, EatDesire, BreedDesire
         var brain = animal.Brain;
         Assert.Equal(8, brain.InputCount);
-        Assert.Equal(2, brain.OutputCount);
+        Assert.Equal(4, brain.OutputCount);
     }
 
     private Ecosystem CreateEcosystem(double width = 2000, double height = 2000)

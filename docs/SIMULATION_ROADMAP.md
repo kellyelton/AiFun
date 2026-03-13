@@ -70,7 +70,7 @@ Only one thing can be "first hit" (you can't see through objects — realistic):
 | 2 | `LookingAngle` | [0, 1] | Existing, keep |
 | 3 | `WallAhead` | 0 or 1 | First thing hit is a world boundary |
 | 4 | `AliveCreatureAhead` | 0 or 1 | First thing hit is a living animal |
-| 5 | `DeadCreatureAhead` | 0 or 1 | First thing hit is a dead animal (food) |
+| 5 | `DeadCreatureAhead` | 0 or 1 | First thing hit is a dead animal (food source) |
 | 6 | `DistanceToObjectAhead` | [0, 1] | Normalized by `VisionDistance`, **inverted** (closer = higher) |
 
 At most one of inputs 3–5 is 1 at a time. If nothing is within `VisionDistance`, all three are 0 and distance is 0.
@@ -121,7 +121,7 @@ return LengthOfLife * 1_000_000_000
 ---
 
 ### Step 2b: Food Pellets
-**Status:** 🔧 In progress
+**Status:** ✅ Complete
 **Effort:** Medium | **Impact:** 🔥🔥🔥
 
 Without an external food source, the optimal survival strategy is "go blind, sit still" — vision and movement are pure energy costs with no payoff. Food pellets give creatures a reason to see, move, and navigate.
@@ -149,9 +149,9 @@ Without an external food source, the optimal survival strategy is "go blind, sit
 | # | Input | Range | Meaning |
 |---|-------|-------|---------|
 | 7 | `FoodAhead` | 0 or 1 | First thing hit by vision ray is a food pellet |
-| 8 | `FoodEnergyAhead` | [0, 1] | Energy of detected food, normalized by `FoodMaxEnergy` |
+| 8 | `FoodEnergyAhead` | [0, 1] | Energy of detected food/corpse, normalized (pellets by `FoodMaxEnergy`, corpses by 10000) |
 
-At most one of `WallAhead`, `AliveCreatureAhead`, `DeadCreatureAhead`, `FoodAhead` is 1 at a time.
+At most one of `WallAhead`, `AliveCreatureAhead`, `DeadCreatureAhead`, `FoodAhead` is 1 at a time. `FoodEnergyAhead` is set for both food pellets and dead creatures.
 
 #### Implementation plan
 1. Create `FoodPellet` class (extends `AnimateObject`, speed=0)
@@ -170,7 +170,7 @@ At most one of `WallAhead`, `AliveCreatureAhead`, `DeadCreatureAhead`, `FoodAhea
 ---
 
 ### Step 3: Interaction Agency
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 **Effort:** Medium | **Impact:** 🔥
 
 Give creatures neural network outputs to control what they do on contact, instead of automatic outcomes.
@@ -188,15 +188,25 @@ No "flee" output — fleeing is already handled by the creature turning away and
 
 #### `HandleTouching()` rework
 ```
-if EatDesire > BreedDesire:
-    attempt to eat (current energy-comparison logic)
+if other is dead:
+    bite for FoodBiteSize energy (same mechanic as food pellets)
+    mark WasEaten when corpse energy reaches 0
 else if BreedDesire > EatDesire:
-    attempt to breed (current compatibility checks)
+    attempt to breed (compatibility checks)
+    if breeding fails: do nothing (creature chose peace)
+else if EatDesire > BreedDesire:
+    attempt to eat (energy-comparison fight)
 else:
     do nothing
 ```
 
-Both actions still cost energy. A creature with high `BreedDesire` touching a dead body won't eat it — it has to evolve the right priorities for the right context. This creates selection pressure for creatures that read their vision inputs and adjust desires appropriately.
+Dead creatures use the same bite mechanic as food pellets — eaten in `FoodBiteSize` chunks, energy transfers based on what the corpse actually has left. `FoodEnergyAhead` reports the corpse's real remaining energy. The desire system only applies to **live creature encounters**, where the stakes (fight vs. breed) actually matter.
+
+#### Visual feedback
+Nose dot color reflects the creature's current dominant desire:
+- **Red** = EatDesire dominant (aggressive)
+- **Yellow** = BreedDesire dominant (social)
+- **Gray** = neutral (desires roughly equal)
 
 #### Interaction with existing pregnancy
 Currently `CanBreed()` blocks breeding entirely when pregnant. Updated behavior:

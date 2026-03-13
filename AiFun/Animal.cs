@@ -115,6 +115,28 @@ namespace AiFun
         public double FoodEnergyAhead { get; private set; }
         public double DistanceToObjectAhead { get; private set; }
 
+        public double EatDesire
+        {
+            get { return _eatDesire; }
+            set
+            {
+                if (value.Equals(_eatDesire)) return;
+                _eatDesire = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public double BreedDesire
+        {
+            get { return _breedDesire; }
+            set
+            {
+                if (value.Equals(_breedDesire)) return;
+                _breedDesire = value;
+                OnPropertyChanged();
+            }
+        }
+
         public string VisionRayColor
         {
             get
@@ -124,6 +146,22 @@ namespace AiFun
                 if (DeadCreatureAhead > 0) return "#CC44CC44";
                 if (FoodAhead > 0) return "#CC00CC00";
                 return "#44888888";
+            }
+        }
+
+        /// <summary>
+        /// Nose dot color reflecting dominant desire:
+        /// Red = eat desire dominant, Yellow = breed desire dominant, Gray = neutral
+        /// </summary>
+        public string DesireIndicatorColor
+        {
+            get
+            {
+                if (IsDead) return "#FF555555";
+                var diff = EatDesire - BreedDesire;
+                if (diff > 0.1) return "#FFE53935";   // red — wants to eat/fight
+                if (diff < -0.1) return "#FFFDD835";  // yellow — wants to breed
+                return "#FF888888";                    // gray — neutral
             }
         }
 
@@ -291,6 +329,8 @@ namespace AiFun
         private double _deltaTurn;
         private double _turnDeltaPerTick;
         private double _visionDistance;
+        private double _eatDesire;
+        private double _breedDesire;
 
         public Animal(Ecosystem eco)
         {
@@ -371,6 +411,7 @@ namespace AiFun
             if (IsDead) return;
             foreach (var other in Touching)
             {
+                // Food eating is automatic — no agency needed
                 if (other is FoodPellet food && !food.IsConsumed)
                 {
                     var gained = food.Bite(_eco.FoodBiteSize);
@@ -379,55 +420,60 @@ namespace AiFun
                     continue;
                 }
 
-                // don't worry about inanimate objects right now
-                if ((other is AnimateObject) == false) continue;
-                // If not an animal, don't worry about it now
-                if ((other is Animal) == false) continue;
+                if (other is not Animal o) continue;
 
-                var o = other as Animal;
                 o.Touching.Remove(this);
-                // If the other guy is dead, we should probably eat them
+
+                // Dead creature = food source, eaten in bite-sized chunks
                 if (o.IsDead)
                 {
-                    Trace.WriteLine("Ate a guy");
-                    this.OthersEaten++;
-                    this.AvailableEnergy += 1000;
-                    o.WasEaten = true;
-                    return;
+                    if (o.AvailableEnergy <= 0) continue;
+                    var gained = Math.Min(_eco.FoodBiteSize, o.AvailableEnergy);
+                    o.AvailableEnergy -= gained;
+                    this.AvailableEnergy += gained;
+                    this.FoodEaten += gained;
+                    if (o.AvailableEnergy <= 0)
+                        o.WasEaten = true;
+                    Trace.WriteLine("Ate a chunk of corpse");
+                    continue;
                 }
 
-                // Lets do some sex. First we check if it's doable
-                if (CanBreed(o) && o.CanBreed(this))
+                // Live creature encounter — desires determine behavior
+                if (BreedDesire > EatDesire)
                 {
-                    Trace.WriteLine("Breeding");
-                    // Both lose energy
-                    AvailableEnergy -= 100 * MovementEfficency;
-                    o.AvailableEnergy -= 100 * o.MovementEfficency;
+                    // Attempt to breed first
+                    if (CanBreed(o) && o.CanBreed(this))
+                    {
+                        Trace.WriteLine("Breeding");
+                        AvailableEnergy -= 100 * MovementEfficency;
+                        o.AvailableEnergy -= 100 * o.MovementEfficency;
 
-                    if (IsFemale)
-                        Impregnate(o);
-                    if (o.IsFemale)
-                        Impregnate(this);
-                    this.BabiesCreated++;
-                    o.BabiesCreated++;
-                    return;
+                        if (IsFemale)
+                            Impregnate(o);
+                        if (o.IsFemale)
+                            Impregnate(this);
+                        this.BabiesCreated++;
+                        o.BabiesCreated++;
+                        return;
+                    }
+                    // Breeding not possible — creature passes on fighting
+                    // (evolving high BreedDesire in wrong contexts is a disadvantage)
                 }
-
-                // Breeding not possible, only thing left 2 do is eet eachother
-                if (this.AvailableEnergy > o.AvailableEnergy)
+                else if (EatDesire > BreedDesire)
                 {
-                    o.AvailableEnergy = 0;
-                    o.IsDead = true;
-                    o.WasEaten = true;
-                    this.AvailableEnergy += 20;
+                    // Attempt to kill — energy comparison determines who wins
+                    // Loser dies but retains energy as a scavengeable corpse
+                    if (this.AvailableEnergy > o.AvailableEnergy)
+                    {
+                        o.IsDead = true;
+                    }
+                    else if (o.AvailableEnergy > this.AvailableEnergy)
+                    {
+                        IsDead = true;
+                        return;
+                    }
                 }
-                else if (o.AvailableEnergy > this.AvailableEnergy)
-                {
-                    AvailableEnergy = 0;
-                    IsDead = true;
-                    WasEaten = true;
-                    o.AvailableEnergy += 20;
-                }
+                // else: equal desires — do nothing
             }
         }
 
@@ -443,6 +489,8 @@ namespace AiFun
 
             if (result.HitType == VisionHitType.Food && result.HitObject is FoodPellet foodPellet)
                 FoodEnergyAhead = Math.Clamp(foodPellet.Energy / _eco.FoodMaxEnergy, 0, 1);
+            else if (result.HitType == VisionHitType.DeadCreature && result.HitObject is Animal deadAnimal)
+                FoodEnergyAhead = Math.Clamp(deadAnimal.AvailableEnergy / 10000.0, 0, 1);
             else
                 FoodEnergyAhead = 0;
 
@@ -492,7 +540,7 @@ namespace AiFun
             // LookingAngle: absolute heading magnitude -> [0,1]
             _mapper.MapInputNormalizedToUnit(x => x.LookingAngle, 0, 360);
 
-            // Vision inputs: at most one of WallAhead/AliveCreatureAhead/DeadCreatureAhead is 1
+            // Vision inputs: at most one of WallAhead/AliveCreatureAhead/DeadCreatureAhead/FoodAhead is 1
             _mapper.MapInput(x => x.WallAhead);
             _mapper.MapInput(x => x.AliveCreatureAhead);
             _mapper.MapInput(x => x.DeadCreatureAhead);
@@ -510,7 +558,11 @@ namespace AiFun
 
             // TurnDeltaPerTick: relative heading change per tick -> [-10,+10] degrees
             _mapper.MapOutputDenormalizedFromSignedUnit(x => x.TurnDeltaPerTick, -10, 10);
-            //_mapper.MapOutputDenormalized(x => x.LookingAngle, 0, 360);
+
+            // Interaction desires: both [0, 1] — creature decides eat vs breed on contact
+            _mapper.MapOutputDenormalizedFromSignedUnit(x => x.EatDesire, 0, 1);
+            _mapper.MapOutputDenormalizedFromSignedUnit(x => x.BreedDesire, 0, 1);
+
             return _mapper.CreateNetwork(HiddenNeurons);
         }
 
@@ -565,6 +617,7 @@ namespace AiFun
             OnPropertyChanged(nameof(VisionRayDisplayLength));
             OnPropertyChanged(nameof(BodyColor));
             OnPropertyChanged(nameof(StrokeColor));
+            OnPropertyChanged(nameof(DesireIndicatorColor));
             OnPropertyChanged(nameof(AvailableEnergy));
             OnPropertyChanged(nameof(IsDead));
             OnPropertyChanged(nameof(IsPregnant));
