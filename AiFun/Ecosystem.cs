@@ -365,7 +365,7 @@ namespace AiFun
         private double _visionEnergyCostMultiplier = 0.05;
         private int _visionRayCount = 5;
         private double _visionFieldOfView = 120;
-        private double _mutationRate = 0.001;
+        private double _mutationRate = 0.03;
         private double _mutationStepSize = 0.1;
         private int _topBreeders = 30;
         private int _foodTargetCount = 100;

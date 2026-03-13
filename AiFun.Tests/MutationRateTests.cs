@@ -19,10 +19,10 @@ public class MutationRateTests
     }
 
     [Fact]
-    public void Ecosystem_MutationRate_defaults_to_0_001()
+    public void Ecosystem_MutationRate_defaults_to_0_03()
     {
         var eco = CreateEcosystem();
-        Assert.Equal(0.001, eco.MutationRate);
+        Assert.Equal(0.03, eco.MutationRate);
     }
 
     [Fact]

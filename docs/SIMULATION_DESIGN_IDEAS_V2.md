@@ -348,7 +348,7 @@ if (random < MutationRate)
 ---
 
 ### Step 10: Increase Mutation Rate
-**Status:** Not started
+**Status:** Done
 **Effort:** Trivial | **Impact:** 🔥🔥🔥
 
 With Gaussian mutation (Step 8), a higher mutation rate is safe — each mutation is a small nudge, not a catastrophe. The current 0.1% rate means most offspring are exact copies of one parent's weights with zero variation. Evolution is glacially slow.
