@@ -561,8 +561,13 @@ namespace AiFun
                 else
                     angleOffset = -halfFov + (fov * i / (rayCount - 1));
 
+                // Peripheral rays are shorter — scale by cosine of angle offset
+                // Center ray (offset=0) gets full range, outermost rays get less
+                var peripheralScale = Math.Cos(angleOffset * (Math.PI / 180.0));
+                var rayVision = effectiveVision * peripheralScale;
+
                 var rayAngle = NormalizeAngle(LookingAngle + angleOffset);
-                var result = _eco.ObjectAlongLine(rayAngle, Location.TopLeft, effectiveVision);
+                var result = _eco.ObjectAlongLine(rayAngle, Location.TopLeft, rayVision);
 
                 double objectType = 0;
                 double objectDistance = 0;
@@ -588,8 +593,8 @@ namespace AiFun
                         break;
                 }
 
-                if (result.HitType != VisionHitType.None && effectiveVision > 0)
-                    objectDistance = 1.0 - (result.Distance / effectiveVision);
+                if (result.HitType != VisionHitType.None && rayVision > 0)
+                    objectDistance = 1.0 - (result.Distance / rayVision);
 
                 RayResults[i] = new RayResult
                 {
@@ -642,10 +647,10 @@ namespace AiFun
                     angleOffset = -halfFov + (fov * i / (rayCount - 1));
 
                 var ray = RayResults[i];
-                double length = effectiveVision * (1.0 - ray.ObjectDistance);
-                if (length < 1) length = 1;
-
                 var radians = angleOffset * (Math.PI / 180.0);
+                var peripheralScale = Math.Cos(radians);
+                double length = effectiveVision * peripheralScale * (1.0 - ray.ObjectDistance);
+                if (length < 1) length = 1;
                 var endX = Math.Cos(radians) * length;
                 var endY = Math.Sin(radians) * length;
 

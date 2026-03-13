@@ -443,11 +443,13 @@ public class MultiRayVisionTests
     public void Three_rays_spread_at_correct_angles()
     {
         // With 3 rays and 120 FOV: offsets = -60, 0, +60
+        // Peripheral rays at ±60° have cos(60°)=0.5 range scaling, so need extra vision
+        // to reach walls. Place creature close to corner with high vision distance.
         var eco = CreateEcosystem(200, 200);
         eco.VisionRayCount = 3;
         eco.VisionFieldOfView = 120;
-        var animal = CreateAnimalAt(eco, 100, 100);
-        animal.LookingAngle = 0; // looking right
+        var animal = CreateAnimalAt(eco, 10, 100);
+        animal.LookingAngle = 180; // looking left toward nearby wall
         animal.VisionDistance = 200;
         eco.AnimateObjects.Clear();
         eco.AnimateObjects.Add(animal);

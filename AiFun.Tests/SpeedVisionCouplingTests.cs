@@ -134,11 +134,12 @@ public class SpeedVisionCouplingTests
     [Fact]
     public void Low_speed_activates_all_5_rays()
     {
+        // Place creature near wall so peripheral rays (cosine-scaled shorter) can still detect it
         var eco = CreateEcosystem(200, 200);
         eco.VisionRayCount = 5;
         eco.VisionFieldOfView = 120;
-        var animal = CreateAnimalAt(eco, 100, 100);
-        animal.LookingAngle = 0;
+        var animal = CreateAnimalAt(eco, 5, 100);
+        animal.LookingAngle = 180; // facing left wall
         animal.VisionDistance = 200;
         animal.Speed = 0; // all rays active
 
@@ -161,8 +162,8 @@ public class SpeedVisionCouplingTests
         var eco = CreateEcosystem(200, 200);
         eco.VisionRayCount = 5;
         eco.VisionFieldOfView = 120;
-        var animal = CreateAnimalAt(eco, 100, 100);
-        animal.LookingAngle = 0;
+        var animal = CreateAnimalAt(eco, 5, 100);
+        animal.LookingAngle = 180; // facing left wall
         animal.VisionDistance = 200;
         animal.Speed = 10; // speedFraction = 0.5 -> center 3 rays active
 
@@ -218,8 +219,8 @@ public class SpeedVisionCouplingTests
         var eco = CreateEcosystem(200, 200);
         eco.VisionRayCount = 5;
         eco.VisionFieldOfView = 120;
-        var animal = CreateAnimalAt(eco, 100, 100);
-        animal.LookingAngle = 0;
+        var animal = CreateAnimalAt(eco, 5, 100);
+        animal.LookingAngle = 180; // facing left wall
         animal.VisionDistance = 200;
         animal.Speed = 4; // speedFraction = 0.2 < 0.25 threshold -> all rays active
 
@@ -540,8 +541,8 @@ public class SpeedVisionCouplingTests
         var eco = CreateEcosystem(200, 200);
         eco.VisionRayCount = 5;
         eco.VisionFieldOfView = 120;
-        var animal = CreateAnimalAt(eco, 100, 100);
-        animal.LookingAngle = 0;
+        var animal = CreateAnimalAt(eco, 5, 100);
+        animal.LookingAngle = 180; // facing left wall
         animal.VisionDistance = 200;
         animal.Speed = -5; // negative
 
