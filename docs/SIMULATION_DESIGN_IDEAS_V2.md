@@ -298,7 +298,7 @@ This is the simplest form of recurrence — no LSTM cells, no separate memory ar
 ---
 
 ### Step 9: Gaussian Mutation
-**Status:** Not started
+**Status:** Done
 **Effort:** Trivial | **Impact:** 🔥🔥🔥🔥
 
 Currently when a weight mutates (`ExtensionMethods.SetToRandom` with bias), it's completely replaced with a random value in [-1, 1]. This is catastrophic — a weight that evolved over hundreds of generations to a useful value of 0.73 gets randomly replaced with -0.41. Any useful patterns are destroyed by a single mutation event.

@@ -694,6 +694,9 @@ namespace AiFun
             ColorG = ColorG.SetToRandom(a1.ColorG, a2.ColorG);
             ColorB = ColorB.SetToRandom(a1.ColorB, a2.ColorB);
 
+            // Gaussian perturbation for continuous genetic traits
+            MutateTraits();
+
             CrossoverBrainWeights(net, a1.Brain.GetFNData().ToArray(), a2.Brain.GetFNData().ToArray());
         }
 
@@ -709,6 +712,9 @@ namespace AiFun
             ColorR = ColorR.SetToRandom(mother.ColorR, fatherColorR);
             ColorG = ColorG.SetToRandom(mother.ColorG, fatherColorG);
             ColorB = ColorB.SetToRandom(mother.ColorB, fatherColorB);
+
+            // Gaussian perturbation for continuous genetic traits
+            MutateTraits();
 
             CrossoverBrainWeights(net, mother.Brain.GetFNData().ToArray(), fatherBrain);
         }
@@ -736,7 +742,7 @@ namespace AiFun
                     f.Weight = w1.Weight;
                     continue;
                 }
-                f.Weight = f.Weight.SetToRandom(w1.Weight, w2.Weight, _eco.MutationRate);
+                f.Weight = f.Weight.SetToRandom(w1.Weight, w2.Weight, _eco.MutationRate, _eco.MutationStepSize);
             }
             net.SetFNData(fnet);
         }
@@ -804,6 +810,27 @@ namespace AiFun
             }
 
             return rayCount - 2 * pairsDisabled;
+        }
+
+        /// <summary>
+        /// Applies small Gaussian perturbation to continuous genetic traits with probability = MutationRate.
+        /// Uses a smaller step size (0.05) than weight mutation since traits have tighter ranges.
+        /// </summary>
+        private void MutateTraits()
+        {
+            const double traitStepSize = 0.05;
+            if (_rnd.NextDouble() < _eco.MutationRate)
+                MovementEfficency = Math.Clamp(MovementEfficency + ExtensionMethods.Gaussian(0, traitStepSize), 0, 1);
+            if (_rnd.NextDouble() < _eco.MutationRate)
+                VisionDistance = Math.Clamp(VisionDistance + ExtensionMethods.Gaussian(0, traitStepSize * _eco.MaxVisionDistance), 0, _eco.MaxVisionDistance);
+            if (_rnd.NextDouble() < _eco.MutationRate)
+                PregnancyGene = Math.Clamp(PregnancyGene + ExtensionMethods.Gaussian(0, traitStepSize), 0, 1);
+            if (_rnd.NextDouble() < _eco.MutationRate)
+                ColorR = Math.Clamp(ColorR + ExtensionMethods.Gaussian(0, traitStepSize), 0, 1);
+            if (_rnd.NextDouble() < _eco.MutationRate)
+                ColorG = Math.Clamp(ColorG + ExtensionMethods.Gaussian(0, traitStepSize), 0, 1);
+            if (_rnd.NextDouble() < _eco.MutationRate)
+                ColorB = Math.Clamp(ColorB + ExtensionMethods.Gaussian(0, traitStepSize), 0, 1);
         }
 
         private static double NormalizeAngle(double angle)

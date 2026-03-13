@@ -9,6 +9,18 @@ namespace AiFun
     {
         private static Random _rnd = new Random();
 
+        /// <summary>
+        /// Generates a normally-distributed random number using the Box-Muller transform.
+        /// </summary>
+        public static double Gaussian(double mean, double stddev)
+        {
+            if (stddev == 0) return mean;
+            double u1 = 1.0 - _rnd.NextDouble(); // avoid log(0)
+            double u2 = _rnd.NextDouble();
+            double normal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2.0 * Math.PI * u2);
+            return mean + stddev * normal;
+        }
+
         public static BasicNetwork Randomize(this BasicNetwork net)
         {
             net.Reset();
@@ -124,13 +136,19 @@ namespace AiFun
 
         public static double SetToRandom(this double num, double first, double second, double bias)
         {
+            return num.SetToRandom(first, second, bias, 0.1);
+        }
+
+        public static double SetToRandom(this double num, double first, double second, double bias, double stepSize)
+        {
+            // Choose parent weight (50/50)
+            num = SetToRandom(num, first, second);
+            // Apply Gaussian perturbation with probability = bias (mutation rate)
             var n = _rnd.NextDouble();
             if (n < bias)
             {
-                num = _rnd.NextDouble();
-                return num;
+                num = Math.Clamp(num + Gaussian(0, stepSize), -1, 1);
             }
-            num = SetToRandom(num, first, second);
             return num;
         }
 

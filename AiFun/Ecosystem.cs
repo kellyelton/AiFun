@@ -174,6 +174,17 @@ namespace AiFun
             }
         }
 
+        public double MutationStepSize
+        {
+            get { return _mutationStepSize; }
+            set
+            {
+                if (value.Equals(_mutationStepSize)) return;
+                _mutationStepSize = Math.Max(0, value);
+                OnPropertyChanged();
+            }
+        }
+
         public int TopBreeders
         {
             get { return _topBreeders; }
@@ -355,6 +366,7 @@ namespace AiFun
         private int _visionRayCount = 5;
         private double _visionFieldOfView = 120;
         private double _mutationRate = 0.001;
+        private double _mutationStepSize = 0.1;
         private int _topBreeders = 30;
         private int _foodTargetCount = 100;
         private double _foodMinStartEnergy = 50;
