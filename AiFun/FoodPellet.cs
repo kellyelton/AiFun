@@ -71,7 +71,13 @@ namespace AiFun
         public override void Update(double time)
         {
             if (IsConsumed) return;
-            Energy = Math.Min(Energy + _eco.FoodGrowthRate * time, _eco.FoodMaxEnergy);
+            var newEnergy = Math.Min(_energy + _eco.FoodGrowthRate * time, _eco.FoodMaxEnergy);
+            if (newEnergy.Equals(_energy)) return;
+            var oldSize = DisplaySize;
+            _energy = newEnergy;
+            var newSize = DisplaySize;
+            if (Math.Abs(newSize - oldSize) > 0.01)
+                UpdateLocationSize();
         }
 
         public override void HandleTouching()
