@@ -131,15 +131,10 @@ namespace AiFun
             var dt = SimulationDeltaSeconds;
             var steps = StepsPerFrame;
 
-            if (steps > 1)
-            {
-                Entities.Object.SuppressNotifications = true;
-                for (int i = 0; i < steps - 1; i++)
-                    Ecosystem.Update(dt);
-                Entities.Object.SuppressNotifications = false;
-            }
-
-            Ecosystem.Update(dt);
+            Entities.Object.SuppressNotifications = true;
+            for (int i = 0; i < steps; i++)
+                Ecosystem.Update(dt);
+            Entities.Object.SuppressNotifications = false;
             Ecosystem.RefreshUI();
         }
 
