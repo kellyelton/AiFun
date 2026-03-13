@@ -9,6 +9,7 @@ namespace AiFun
         private readonly PropertyInfo _prop;
         private readonly object _instance;
         private readonly Func<double, double> _adjust;
+        private readonly Func<double> _getter;
 
         public Map(PropertyInfo prop, object o, Func<double, double> adjust = null)
         {
@@ -17,8 +18,15 @@ namespace AiFun
             _instance = o;
         }
 
+        public Map(Func<double> getter)
+        {
+            _getter = getter;
+        }
+
         public double GetValue()
         {
+            if (_getter != null)
+                return _getter();
             var ret = (double)_prop.GetValue(_instance);
             if (_adjust != null)
                 ret = _adjust(ret);

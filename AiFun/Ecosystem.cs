@@ -141,6 +141,28 @@ namespace AiFun
             }
         }
 
+        public int VisionRayCount
+        {
+            get { return _visionRayCount; }
+            set
+            {
+                if (value == _visionRayCount) return;
+                _visionRayCount = Math.Max(1, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public double VisionFieldOfView
+        {
+            get { return _visionFieldOfView; }
+            set
+            {
+                if (value.Equals(_visionFieldOfView)) return;
+                _visionFieldOfView = Math.Max(1, value);
+                OnPropertyChanged();
+            }
+        }
+
         public double MutationRate
         {
             get { return _mutationRate; }
@@ -329,7 +351,9 @@ namespace AiFun
         private double _pregnancyEnergyCostMultiplier = 50;
         private double _corpseDecaySeconds = 10;
         private double _maxVisionDistance = 300;
-        private double _visionEnergyCostMultiplier = 0.5;
+        private double _visionEnergyCostMultiplier = 0.05;
+        private int _visionRayCount = 5;
+        private double _visionFieldOfView = 120;
         private double _mutationRate = 0.001;
         private int _topBreeders = 30;
         private int _foodTargetCount = 100;

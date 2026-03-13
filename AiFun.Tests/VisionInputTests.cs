@@ -6,17 +6,15 @@ namespace AiFun.Tests;
 public class VisionInputTests
 {
     [Fact]
-    public void Network_has_8_inputs_and_4_outputs()
+    public void Network_has_17_inputs_and_4_outputs()
     {
         var eco = new Ecosystem(2000, 2000);
         var animal = new Animal(eco);
 
-        // 8 inputs: AvailableEnergy, LookingAngle, WallAhead,
-        // AliveCreatureAhead, DeadCreatureAhead, FoodAhead, FoodEnergyAhead,
-        // DistanceToObjectAhead
+        // 2 base inputs (AvailableEnergy, LookingAngle) + 5 rays * 3 per-ray = 17
         // 4 outputs: Speed, TurnDeltaPerTick, EatDesire, BreedDesire
         var brain = animal.Brain;
-        Assert.Equal(8, brain.InputCount);
+        Assert.Equal(17, brain.InputCount);
         Assert.Equal(4, brain.OutputCount);
     }
 
@@ -33,7 +31,7 @@ public class VisionInputTests
     }
 
     [Fact]
-    public void WallAhead_is_1_when_wall_detected()
+    public void Wall_detected_in_center_ray_when_wall_ahead()
     {
         var eco = CreateEcosystem(200, 200);
         var animal = CreateAnimalAt(eco, 180, 100);
@@ -44,13 +42,12 @@ public class VisionInputTests
 
         animal.UpdateVision();
 
-        Assert.Equal(1, animal.WallAhead);
-        Assert.Equal(0, animal.AliveCreatureAhead);
-        Assert.Equal(0, animal.DeadCreatureAhead);
+        var center = animal.RayResults[animal.RayResults.Length / 2];
+        Assert.Equal(0.25, center.ObjectType); // wall
     }
 
     [Fact]
-    public void AliveCreatureAhead_is_1_when_alive_creature_detected()
+    public void AliveCreature_detected_in_center_ray()
     {
         var eco = CreateEcosystem();
         var looker = CreateAnimalAt(eco, 100, 100);
@@ -63,13 +60,12 @@ public class VisionInputTests
 
         looker.UpdateVision();
 
-        Assert.Equal(1, looker.AliveCreatureAhead);
-        Assert.Equal(0, looker.WallAhead);
-        Assert.Equal(0, looker.DeadCreatureAhead);
+        var center = looker.RayResults[looker.RayResults.Length / 2];
+        Assert.Equal(1.0, center.ObjectType); // alive creature
     }
 
     [Fact]
-    public void DeadCreatureAhead_is_1_when_dead_creature_detected()
+    public void DeadCreature_detected_in_center_ray()
     {
         var eco = CreateEcosystem();
         var looker = CreateAnimalAt(eco, 100, 100);
@@ -84,13 +80,12 @@ public class VisionInputTests
 
         looker.UpdateVision();
 
-        Assert.Equal(1, looker.DeadCreatureAhead);
-        Assert.Equal(0, looker.WallAhead);
-        Assert.Equal(0, looker.AliveCreatureAhead);
+        var center = looker.RayResults[looker.RayResults.Length / 2];
+        Assert.Equal(0.75, center.ObjectType); // dead creature
     }
 
     [Fact]
-    public void All_vision_flags_are_0_when_nothing_detected()
+    public void All_ray_results_are_empty_when_nothing_detected()
     {
         var eco = CreateEcosystem();
         var animal = CreateAnimalAt(eco, 1000, 1000);
@@ -101,14 +96,14 @@ public class VisionInputTests
 
         animal.UpdateVision();
 
-        Assert.Equal(0, animal.WallAhead);
-        Assert.Equal(0, animal.AliveCreatureAhead);
-        Assert.Equal(0, animal.DeadCreatureAhead);
-        Assert.Equal(0, animal.DistanceToObjectAhead);
+        var center = animal.RayResults[animal.RayResults.Length / 2];
+        Assert.Equal(0, center.ObjectType);
+        Assert.Equal(0, center.ObjectDistance);
+        Assert.Equal(0, center.ObjectEnergy);
     }
 
     [Fact]
-    public void DistanceToObjectAhead_is_inverted_normalized_by_VisionDistance()
+    public void ObjectDistance_is_inverted_normalized_by_VisionDistance()
     {
         var eco = CreateEcosystem();
         var looker = CreateAnimalAt(eco, 100, 100);
@@ -121,10 +116,10 @@ public class VisionInputTests
 
         looker.UpdateVision();
 
+        var center = looker.RayResults[looker.RayResults.Length / 2];
         // Distance ~50 out of 200 = 0.25 normalized, inverted = 0.75
-        // With 5px step granularity, allow some tolerance
-        Assert.True(looker.DistanceToObjectAhead > 0.5, $"Expected > 0.5, got {looker.DistanceToObjectAhead}");
-        Assert.True(looker.DistanceToObjectAhead <= 1.0);
+        Assert.True(center.ObjectDistance > 0.5, $"Expected > 0.5, got {center.ObjectDistance}");
+        Assert.True(center.ObjectDistance <= 1.0);
     }
 
     [Fact]
@@ -139,15 +134,13 @@ public class VisionInputTests
 
         animal.UpdateVision();
 
-        // Blind creature should detect nothing
-        Assert.Equal(0, animal.WallAhead);
-        Assert.Equal(0, animal.AliveCreatureAhead);
-        Assert.Equal(0, animal.DeadCreatureAhead);
-        Assert.Equal(0, animal.DistanceToObjectAhead);
+        var center = animal.RayResults[animal.RayResults.Length / 2];
+        Assert.Equal(0, center.ObjectType);
+        Assert.Equal(0, center.ObjectDistance);
     }
 
     [Fact]
-    public void DistanceToObjectAhead_does_not_cause_division_by_zero_when_VisionDistance_is_zero()
+    public void ObjectDistance_does_not_cause_division_by_zero_when_VisionDistance_is_zero()
     {
         var eco = CreateEcosystem();
         var animal = CreateAnimalAt(eco, 1000, 1000);
@@ -160,6 +153,7 @@ public class VisionInputTests
         var ex = Record.Exception(() => animal.UpdateVision());
 
         Assert.Null(ex);
-        Assert.Equal(0, animal.DistanceToObjectAhead);
+        var center = animal.RayResults[animal.RayResults.Length / 2];
+        Assert.Equal(0, center.ObjectDistance);
     }
 }

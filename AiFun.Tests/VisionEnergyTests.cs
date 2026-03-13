@@ -18,9 +18,10 @@ public class VisionEnergyTests
     }
 
     [Fact]
-    public void Vision_drains_energy_proportional_to_VisionDistance()
+    public void Vision_drains_energy_proportional_to_VisionDistance_and_RayCount()
     {
         var eco = CreateEcosystem();
+        eco.VisionRayCount = 5;
         eco.VisionEnergyCostMultiplier = 1.0;
         eco.BaseEnergyDrainPerSecond = 0; // isolate vision cost
         eco.MovementEnergyCostMultiplier = 0; // isolate vision cost
@@ -38,8 +39,9 @@ public class VisionEnergyTests
         var energyAfter = animal.AvailableEnergy;
 
         var drain = energyBefore - energyAfter;
-        // Vision drain should be VisionDistance * VisionEnergyCostMultiplier * time = 100 * 1.0 * 1.0 = 100
-        Assert.InRange(drain, 95, 105); // allow small tolerance for floating point
+        // Vision drain = VisionDistance * VisionRayCount * VisionEnergyCostMultiplier * time
+        // = 100 * 5 * 1.0 * 1.0 = 500
+        Assert.InRange(drain, 495, 505);
     }
 
     [Fact]
@@ -110,7 +112,7 @@ public class VisionEnergyTests
         eco.AnimateObjects.Clear();
         eco.AnimateObjects.Add(animal);
 
-        // Vision cost = 200 * 5.0 * 1.0 = 1000, far exceeds 10 energy
+        // Vision cost = 200 * 5 * 5.0 * 1.0 = 5000, far exceeds 10 energy
         animal.Update(1.0);
         Assert.True(animal.AvailableEnergy <= 0);
 

@@ -30,12 +30,13 @@ public class InteractionAgencyTests
     }
 
     [Fact]
-    public void Network_has_8_inputs()
+    public void Network_has_17_inputs()
     {
         var eco = CreateEcosystem();
         var animal = new Animal(eco);
 
-        Assert.Equal(8, animal.Brain.InputCount);
+        // 2 base + 5*3 rays = 17
+        Assert.Equal(17, animal.Brain.InputCount);
     }
 
     // --- EatDesire / BreedDesire properties exist and are in [0, 1] ---
@@ -45,8 +46,6 @@ public class InteractionAgencyTests
     {
         var eco = CreateEcosystem();
         var animal = new Animal(eco);
-        // After a network update, EatDesire should be clamped to [0, 1]
-        // Force an update by calling Update
         eco.AnimateObjects.Clear();
         eco.AnimateObjects.Add(animal);
         animal.Location = new Rect(500, 500, 5, 5);
@@ -122,9 +121,6 @@ public class InteractionAgencyTests
         var eco = CreateEcosystem();
         var female = CreateAnimalAt(eco, 100, 100);
         var male = CreateAnimalAt(eco, 100, 100);
-        // Force sex — female >= 0.5, male <= 0.5
-        // We can't set Sex directly since it's private set, but we can check the behavior
-        // by setting both creatures' desires and verifying breeding occurs when compatible
         female.AvailableEnergy = 5000;
         male.AvailableEnergy = 5000;
         female.BreedDesire = 0.8;
@@ -135,13 +131,10 @@ public class InteractionAgencyTests
         eco.AnimateObjects.Add(female);
         eco.AnimateObjects.Add(male);
 
-        // Only if they're actually compatible will breeding happen
-        // We test that with high BreedDesire, breeding is attempted rather than killing
         if (female.IsFemale && male.IsMale && !female.IsPregnant)
         {
             female.Touching.Add(male);
             female.HandleTouching();
-            // Should attempt breed, not kill
             Assert.False(male.IsDead, "With BreedDesire > EatDesire, should breed not kill");
         }
     }
@@ -165,7 +158,6 @@ public class InteractionAgencyTests
         a.Touching.Add(b);
         a.HandleTouching();
 
-        // Neither killed nor bred
         Assert.False(b.IsDead, "Equal desires should result in no action");
         Assert.False(a.IsPregnant);
     }
@@ -180,7 +172,6 @@ public class InteractionAgencyTests
         eco.FoodMinStartEnergy = 200;
         var animal = CreateAnimalAt(eco, 100, 100);
         animal.AvailableEnergy = 500;
-        // Even with low EatDesire, food should be eaten
         animal.EatDesire = 0.0;
         animal.BreedDesire = 1.0;
         var food = new FoodPellet(eco);
@@ -207,7 +198,6 @@ public class InteractionAgencyTests
         strong.AvailableEnergy = 5000;
         weak.EatDesire = 0.9;
         weak.BreedDesire = 0.1;
-        // Weak tries to eat strong, but energy comparison determines outcome
         eco.AnimateObjects.Clear();
         eco.AnimateObjects.Add(weak);
         eco.AnimateObjects.Add(strong);
@@ -215,7 +205,6 @@ public class InteractionAgencyTests
         weak.Touching.Add(strong);
         weak.HandleTouching();
 
-        // Weak creature should die because strong has more energy
         Assert.True(weak.IsDead);
     }
 }

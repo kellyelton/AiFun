@@ -371,8 +371,12 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource HudLabel}" Text="Max Vision Distance"/>
                         <Slider Style="{StaticResource HudSlider}" Minimum="10" Maximum="600" Value="{Binding Ecosystem.MaxVisionDistance, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.VisionRayCount, StringFormat='Ray Count ({0})'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="1" Maximum="11" Value="{Binding Ecosystem.VisionRayCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="2"/>
+                        <TextBlock Style="{StaticResource HudLabel}" Text="{Binding Ecosystem.VisionFieldOfView, StringFormat='Field of View ({0:F0}°)'}"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="10" Maximum="360" Value="{Binding Ecosystem.VisionFieldOfView, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBlock Style="{StaticResource HudLabel}" Text="Vision Energy Cost"/>
-                        <Slider Style="{StaticResource HudSlider}" Minimum="0" Maximum="5" Value="{Binding Ecosystem.VisionEnergyCostMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.1"/>
+                        <Slider Style="{StaticResource HudSlider}" Minimum="0" Maximum="5" Value="{Binding Ecosystem.VisionEnergyCostMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="False" SmallChange="0.01"/>
                         <CheckBox Style="{StaticResource HudCheck}" Margin="0,4,0,0" Content="Show Vision Rays (V)"
                                   IsChecked="{Binding ShowVisionRays, Mode=TwoWay}"/>
                     </StackPanel>

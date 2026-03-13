@@ -110,12 +110,7 @@ namespace AiFun
             }
         }
 
-        public double WallAhead { get; private set; }
-        public double AliveCreatureAhead { get; private set; }
-        public double DeadCreatureAhead { get; private set; }
-        public double FoodAhead { get; private set; }
-        public double FoodEnergyAhead { get; private set; }
-        public double DistanceToObjectAhead { get; private set; }
+        public RayResult[] RayResults { get; private set; }
 
         public double EatDesire
         {
@@ -143,10 +138,12 @@ namespace AiFun
         {
             get
             {
-                if (WallAhead > 0) return "#CCFF4444";
-                if (AliveCreatureAhead > 0) return "#CCFFAA00";
-                if (DeadCreatureAhead > 0) return "#CC44CC44";
-                if (FoodAhead > 0) return "#CC00CC00";
+                if (RayResults == null || RayResults.Length == 0) return "#44888888";
+                var center = RayResults[RayResults.Length / 2];
+                if (center.ObjectType == 0.25) return "#CCFF4444";      // wall
+                if (center.ObjectType == 1.0) return "#CCFFAA00";       // alive creature
+                if (center.ObjectType == 0.75) return "#CC44CC44";      // dead creature
+                if (center.ObjectType == 0.5) return "#CC00CC00";       // food
                 return "#44888888";
             }
         }
@@ -172,10 +169,12 @@ namespace AiFun
             get
             {
                 if (VisionDistance <= 0) return 0;
-                // DistanceToObjectAhead is inverted: closer = higher
-                // Actual distance = VisionDistance * (1 - DistanceToObjectAhead)
-                // When nothing detected, DistanceToObjectAhead = 0, so this = VisionDistance (full range)
-                return VisionDistance * (1.0 - DistanceToObjectAhead);
+                if (RayResults == null || RayResults.Length == 0) return VisionDistance;
+                var center = RayResults[RayResults.Length / 2];
+                // ObjectDistance is inverted: closer = higher
+                // Actual distance = VisionDistance * (1 - ObjectDistance)
+                // When nothing detected, ObjectDistance = 0, so this = VisionDistance (full range)
+                return VisionDistance * (1.0 - center.ObjectDistance);
             }
         }
 
@@ -430,7 +429,7 @@ namespace AiFun
             //    AvailableEnergy -= 100;
             //}
             // Vision energy drain
-            AvailableEnergy -= VisionDistance * _eco.VisionEnergyCostMultiplier * time;
+            AvailableEnergy -= VisionDistance * _eco.VisionRayCount * _eco.VisionEnergyCostMultiplier * time;
             // Pregnancy energy drain
             if (IsPregnant)
                 AvailableEnergy -= _eco.PregnancyEnergyCostMultiplier * time;
@@ -513,25 +512,67 @@ namespace AiFun
 
         public void UpdateVision()
         {
-            var result = _eco.ObjectAlongLine(LookingAngle, Location.TopLeft, VisionDistance);
+            var rayCount = _eco.VisionRayCount;
+            var fov = _eco.VisionFieldOfView;
 
-            FocusingObject = result.HitObject;
-            WallAhead = result.HitType == VisionHitType.Wall ? 1 : 0;
-            AliveCreatureAhead = result.HitType == VisionHitType.AliveCreature ? 1 : 0;
-            DeadCreatureAhead = result.HitType == VisionHitType.DeadCreature ? 1 : 0;
-            FoodAhead = result.HitType == VisionHitType.Food ? 1 : 0;
+            if (RayResults == null || RayResults.Length != rayCount)
+                RayResults = new RayResult[rayCount];
 
-            if (result.HitType == VisionHitType.Food && result.HitObject is FoodPellet foodPellet)
-                FoodEnergyAhead = Math.Clamp(foodPellet.Energy / _eco.FoodMaxEnergy, 0, 1);
-            else if (result.HitType == VisionHitType.DeadCreature && result.HitObject is Animal deadAnimal)
-                FoodEnergyAhead = Math.Clamp(deadAnimal.AvailableEnergy / 10000.0, 0, 1);
-            else
-                FoodEnergyAhead = 0;
+            var halfFov = fov / 2.0;
+            var centerIndex = rayCount / 2;
+            Object centerHitObject = null;
 
-            if (result.HitType != VisionHitType.None && VisionDistance > 0)
-                DistanceToObjectAhead = 1.0 - (result.Distance / VisionDistance);
-            else
-                DistanceToObjectAhead = 0;
+            for (int i = 0; i < rayCount; i++)
+            {
+                double angleOffset;
+                if (rayCount == 1)
+                    angleOffset = 0;
+                else
+                    angleOffset = -halfFov + (fov * i / (rayCount - 1));
+
+                var rayAngle = NormalizeAngle(LookingAngle + angleOffset);
+                var result = _eco.ObjectAlongLine(rayAngle, Location.TopLeft, VisionDistance);
+
+                double objectType = 0;
+                double objectDistance = 0;
+                double objectEnergy = 0;
+
+                switch (result.HitType)
+                {
+                    case VisionHitType.Wall:
+                        objectType = 0.25;
+                        break;
+                    case VisionHitType.Food:
+                        objectType = 0.5;
+                        if (result.HitObject is FoodPellet foodPellet)
+                            objectEnergy = Math.Clamp(foodPellet.Energy / _eco.FoodMaxEnergy, 0, 1);
+                        break;
+                    case VisionHitType.DeadCreature:
+                        objectType = 0.75;
+                        if (result.HitObject is Animal deadAnimal)
+                            objectEnergy = Math.Clamp(deadAnimal.AvailableEnergy / 10000.0, 0, 1);
+                        break;
+                    case VisionHitType.AliveCreature:
+                        objectType = 1.0;
+                        break;
+                }
+
+                if (result.HitType != VisionHitType.None && VisionDistance > 0)
+                    objectDistance = 1.0 - (result.Distance / VisionDistance);
+
+                RayResults[i] = new RayResult
+                {
+                    ObjectType = objectType,
+                    ObjectDistance = objectDistance,
+                    ObjectEnergy = objectEnergy
+                };
+
+                if (i == centerIndex)
+                    centerHitObject = result.HitObject;
+            }
+
+            // Update FocusingObject from center ray (already computed in loop)
+            FocusingObject = centerHitObject;
         }
 
         protected bool CanBreed(Animal other)
@@ -568,31 +609,25 @@ namespace AiFun
 
         private BasicNetwork SetupNetwork()
         {
-            _mapper = new NetworkMapper<Animal>(this);
-            //_mapper.MapInputNormalized(x => x.XVelocity, -1, 1);
-            //_mapper.MapInputNormalized(x => x.YVelocity, -1, 1);
-            //_mapper.MapInputNormalized(x => x.Left, 0, 2000);
-            //_mapper.MapInputNormalized(x => x.Top, 0, 2000);
-            //_mapper.MapInput(x => x.Speed);
+            // Initialize RayResults array before mapping inputs
+            RayResults = new RayResult[_eco.VisionRayCount];
 
-            // Input audit:
-            // AvailableEnergy: non-negative magnitude -> [0,1]
+            _mapper = new NetworkMapper<Animal>(this);
+
+            // Input 0: AvailableEnergy: non-negative magnitude -> [0,1]
             _mapper.MapInput(x => x.AvailableEnergy, x => x.Clamp(0, 10000).NormalizeToUnit(0, 10000));
 
-            // LookingAngle: absolute heading magnitude -> [0,1]
+            // Input 1: LookingAngle: absolute heading magnitude -> [0,1]
             _mapper.MapInputNormalizedToUnit(x => x.LookingAngle, 0, 360);
 
-            // Vision inputs: at most one of WallAhead/AliveCreatureAhead/DeadCreatureAhead/FoodAhead is 1
-            _mapper.MapInput(x => x.WallAhead);
-            _mapper.MapInput(x => x.AliveCreatureAhead);
-            _mapper.MapInput(x => x.DeadCreatureAhead);
-
-            // Food vision inputs
-            _mapper.MapInput(x => x.FoodAhead);
-            _mapper.MapInput(x => x.FoodEnergyAhead);
-
-            // DistanceToObjectAhead: already [0,1], inverted (closer = higher)
-            _mapper.MapInput(x => x.DistanceToObjectAhead);
+            // Inputs 2..2+VisionRayCount*3-1: per-ray vision data
+            for (int i = 0; i < _eco.VisionRayCount; i++)
+            {
+                var rayIndex = i; // capture for closure
+                _mapper.MapInputFunc(() => RayResults[rayIndex].ObjectType);
+                _mapper.MapInputFunc(() => RayResults[rayIndex].ObjectDistance);
+                _mapper.MapInputFunc(() => RayResults[rayIndex].ObjectEnergy);
+            }
 
             // Output audit:
             // Speed: allow stop and slow movement, but with enough upper range to be visible -> [0,20]

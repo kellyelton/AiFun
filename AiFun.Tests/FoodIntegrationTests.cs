@@ -17,10 +17,10 @@ public class FoodIntegrationTests
         return animal;
     }
 
-    // --- Vision: FoodAhead input ---
+    // --- Vision: Food detected in center ray ---
 
     [Fact]
-    public void FoodAhead_is_1_when_food_detected()
+    public void Food_detected_in_center_ray()
     {
         var eco = CreateEcosystem();
         var looker = CreateAnimalAt(eco, 100, 100);
@@ -34,14 +34,12 @@ public class FoodIntegrationTests
 
         looker.UpdateVision();
 
-        Assert.Equal(1, looker.FoodAhead);
-        Assert.Equal(0, looker.WallAhead);
-        Assert.Equal(0, looker.AliveCreatureAhead);
-        Assert.Equal(0, looker.DeadCreatureAhead);
+        var center = looker.RayResults[looker.RayResults.Length / 2];
+        Assert.Equal(0.5, center.ObjectType); // food
     }
 
     [Fact]
-    public void FoodAhead_is_0_when_no_food_detected()
+    public void No_food_detected_when_nothing_in_range()
     {
         var eco = CreateEcosystem();
         var animal = CreateAnimalAt(eco, 1000, 1000);
@@ -52,13 +50,14 @@ public class FoodIntegrationTests
 
         animal.UpdateVision();
 
-        Assert.Equal(0, animal.FoodAhead);
+        var center = animal.RayResults[animal.RayResults.Length / 2];
+        Assert.Equal(0, center.ObjectType);
     }
 
-    // --- Vision: FoodEnergyAhead input ---
+    // --- Vision: ObjectEnergy for food ---
 
     [Fact]
-    public void FoodEnergyAhead_is_normalized_food_energy()
+    public void ObjectEnergy_is_normalized_food_energy()
     {
         var eco = CreateEcosystem();
         eco.FoodMaxEnergy = 500;
@@ -74,12 +73,13 @@ public class FoodIntegrationTests
 
         looker.UpdateVision();
 
+        var center = looker.RayResults[looker.RayResults.Length / 2];
         // 250 / 500 = 0.5
-        Assert.Equal(0.5, looker.FoodEnergyAhead, precision: 2);
+        Assert.Equal(0.5, center.ObjectEnergy, precision: 2);
     }
 
     [Fact]
-    public void FoodEnergyAhead_is_0_when_no_food_detected()
+    public void ObjectEnergy_is_0_when_no_food_detected()
     {
         var eco = CreateEcosystem();
         var animal = CreateAnimalAt(eco, 1000, 1000);
@@ -90,19 +90,21 @@ public class FoodIntegrationTests
 
         animal.UpdateVision();
 
-        Assert.Equal(0, animal.FoodEnergyAhead);
+        var center = animal.RayResults[animal.RayResults.Length / 2];
+        Assert.Equal(0, center.ObjectEnergy);
     }
 
     // --- Neural network input count ---
 
     [Fact]
-    public void Network_has_8_inputs_with_food()
+    public void Network_has_17_inputs_with_5_rays()
     {
         var eco = CreateEcosystem();
+        eco.VisionRayCount = 5;
         var animal = new Animal(eco);
 
-        // 6 original + FoodAhead + FoodEnergyAhead = 8
-        Assert.Equal(8, animal.Brain.InputCount);
+        // 2 base + 5*3 = 17
+        Assert.Equal(17, animal.Brain.InputCount);
         Assert.Equal(4, animal.Brain.OutputCount);
     }
 
@@ -178,6 +180,6 @@ public class FoodIntegrationTests
 
         eco.Update(0.016);
 
-        Assert.Equal(0, eco.AnimateObjects.OfType<FoodPellet>().Count());
+        Assert.Empty(eco.AnimateObjects.OfType<FoodPellet>());
     }
 }

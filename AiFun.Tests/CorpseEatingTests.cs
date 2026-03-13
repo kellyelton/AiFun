@@ -145,10 +145,10 @@ public class CorpseEatingTests
         Assert.Equal(100, eater.FoodEaten, precision: 1);
     }
 
-    // --- Vision: DeadCreatureAhead stays as separate input ---
+    // --- Vision: Dead creature detected via RayResults ---
 
     [Fact]
-    public void DeadCreatureAhead_is_1_when_dead_creature_detected()
+    public void Dead_creature_detected_in_center_ray()
     {
         var eco = CreateEcosystem();
         var looker = CreateAnimalAt(eco, 100, 100);
@@ -163,13 +163,12 @@ public class CorpseEatingTests
 
         looker.UpdateVision();
 
-        Assert.Equal(1, looker.DeadCreatureAhead);
-        Assert.Equal(0, looker.FoodAhead);
-        Assert.Equal(0, looker.AliveCreatureAhead);
+        var center = looker.RayResults[looker.RayResults.Length / 2];
+        Assert.Equal(0.75, center.ObjectType); // dead creature
     }
 
     [Fact]
-    public void FoodEnergyAhead_reports_actual_corpse_energy()
+    public void Corpse_ObjectEnergy_reports_actual_corpse_energy()
     {
         var eco = CreateEcosystem();
         var looker = CreateAnimalAt(eco, 100, 100);
@@ -184,8 +183,9 @@ public class CorpseEatingTests
 
         looker.UpdateVision();
 
+        var center = looker.RayResults[looker.RayResults.Length / 2];
         // 5000 / 10000 = 0.5
-        Assert.Equal(0.5, looker.FoodEnergyAhead, precision: 2);
+        Assert.Equal(0.5, center.ObjectEnergy, precision: 2);
     }
 
     // --- Kill creates a scavengeable corpse, not instant removal ---
@@ -291,13 +291,12 @@ public class CorpseEatingTests
     }
 
     [Fact]
-    public void Network_has_8_inputs_with_DeadCreatureAhead()
+    public void Network_has_17_inputs_with_5_vision_rays()
     {
         var eco = CreateEcosystem();
         var animal = new Animal(eco);
 
-        // AvailableEnergy, LookingAngle, WallAhead, AliveCreatureAhead,
-        // DeadCreatureAhead, FoodAhead, FoodEnergyAhead, DistanceToObjectAhead = 8
-        Assert.Equal(8, animal.Brain.InputCount);
+        // 2 base + 5*3 ray inputs = 17
+        Assert.Equal(17, animal.Brain.InputCount);
     }
 }
