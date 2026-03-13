@@ -474,7 +474,6 @@ namespace AiFun
                     this.FoodEaten += gained;
                     if (o.AvailableEnergy <= 0)
                         o.WasEaten = true;
-                    Trace.WriteLine("Ate a chunk of corpse");
                     continue;
                 }
 
@@ -484,7 +483,6 @@ namespace AiFun
                     // Attempt to breed first
                     if (CanBreed(o) && o.CanBreed(this))
                     {
-                        Trace.WriteLine("Breeding");
                         AvailableEnergy -= 100 * MovementEfficency;
                         o.AvailableEnergy -= 100 * o.MovementEfficency;
 

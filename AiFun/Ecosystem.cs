@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.ComponentModel.Design;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -642,7 +641,6 @@ namespace AiFun
                 {
                     if (an.Location.Left <= 0 || an.Location.Top <= 0 || an.Location.Left >= _worldWidth || an.Location.Top >= _worldHeight)
                     {
-                        Trace.WriteLine("Touched death side");
                         AnimateObjects.Remove(an);
                         _deadObjects.Add(an);
                         continue;
@@ -650,13 +648,11 @@ namespace AiFun
                     var anim = an as Animal;
                     if (anim.IsPregnant && (SimulationTime - anim.TimeImpregnated) >= anim.PregnancyDuration && anim.IsDead == false)
                     {
-                        Trace.WriteLine("Popped a baby");
                         AnimateObjects.Add(anim.PopBaby());
                     }
 
                     if (anim.IsDead && (SimulationTime - anim.TimeOfDeath) >= CorpseDecaySeconds)
                     {
-                        Trace.WriteLine("Disposed of the body");
                         AnimateObjects.Remove(anim);
                         _deadObjects.Add(anim);
                         continue;
@@ -664,7 +660,6 @@ namespace AiFun
 
                     if (anim.IsDead && anim.WasEaten)
                     {
-                        Trace.WriteLine("Was Eaten");
                         AnimateObjects.Remove(anim);
                         _deadObjects.Add(anim);
                         continue;
