@@ -17,6 +17,12 @@ namespace AiFun
         private readonly Dictionary<int, Map> _inmaps;
         private readonly Dictionary<int, Map> _outmaps;
 
+        // Pre-allocated buffers to avoid per-tick allocations
+        private double[] _inputBuffer;
+        private BasicMLData _inputData;
+        private Map[] _inputMapsArray;
+        private Map[] _outputMapsArray;
+
         public NetworkMapper(T cls)
         {
             _instance = cls;
@@ -31,28 +37,30 @@ namespace AiFun
             Network.AddLayer(new BasicLayer(hiddenLayerSize));
             Network.AddLayer(new BasicLayer(_outmaps.Count));
             Network.Structure.FinalizeStructure();
+
+            // Pre-allocate reusable buffers now that map sizes are fixed
+            _inputBuffer = new double[_inmaps.Count];
+            _inputData = new BasicMLData(_inputBuffer, false);
+            _inputMapsArray = new Map[_inmaps.Count];
+            for (int i = 0; i < _inmaps.Count; i++)
+                _inputMapsArray[i] = _inmaps[i];
+            _outputMapsArray = new Map[_outmaps.Count];
+            for (int i = 0; i < _outmaps.Count; i++)
+                _outputMapsArray[i] = _outmaps[i];
+
             return Network;
         }
 
         public void Update()
         {
-            var invals = _inmaps.Select(x => x.Value.GetValue()).ToArray();
-            //var outvals = new double[_outmaps.Count];
-            var ins = new BasicMLData(invals, false);
-            var o = Network.Compute(ins);
-            //Network.Compute(invals, outvals);
-            foreach (var i in _outmaps)
-            {
-                i.Value.SetValue(o[i.Key]);
-            }
-            //foreach (var i in _inmaps)
-            //{
-            //    Network.InputNodes[i.Key].Value = i.Value.GetValue();
-            //}
-            //foreach (var i in _outmaps)
-            //{
-            //    i.Value.SetValue(Network.OutputNodes[i.Key].Value);
-            //}
+            // Fill pre-allocated buffer in-place — no LINQ, no array allocation
+            for (int i = 0; i < _inputMapsArray.Length; i++)
+                _inputBuffer[i] = _inputMapsArray[i].GetValue();
+
+            var o = Network.Compute(_inputData);
+
+            for (int i = 0; i < _outputMapsArray.Length; i++)
+                _outputMapsArray[i].SetValue(o[i]);
         }
 
         public void MapInputFunc(Func<double> getter)
