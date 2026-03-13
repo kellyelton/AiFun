@@ -81,7 +81,7 @@ namespace AiFun
 
         private DispatcherTimer _timer;
         private Ecosystem _ecosystem;
-        private double _tickMilliseconds = 60;
+        private double _tickMilliseconds = 10;
         private bool _isPaused;
         private int _stepsPerFrame = 1;
         private bool _showVisionRays;
