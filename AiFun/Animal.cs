@@ -268,11 +268,10 @@ namespace AiFun
         {
             get
             {
-                // Composite fitness: primary=survival, secondary=babies, tertiary=distance
-                // Weights chosen so primary always dominates secondary, etc.
-                return LengthOfLife * 1_000_000_000
-                     + BabiesCreated * 10_000_000
-                     + DistanceTraveled * 1;
+                // Composite fitness: co-primary=survival+reproduction, tiebreaker=food eaten
+                return LengthOfLife * 1000
+                     + BabiesCreated * 5000
+                     + FoodEaten * 1;
             }
         }
 

@@ -51,7 +51,7 @@ Creatures that actively seek food and mates, sustain a population through natura
 
 ### Selection / Evolution
 - Generational: when all creatures die, top `TopBreeders` (30) by fitness become breeding pool
-- Fitness: `LengthOfLife * 1B + BabiesCreated * 10M + DistanceTraveled * 1`
+- Fitness: `LengthOfLife * 1000 + BabiesCreated * 5000 + FoodEaten * 1`
 - Crossover: 50/50 random selection per gene, per weight
 - Mutation: 0.1% chance per weight → complete random replacement in [-1, 1]
 - Each generation: 75 elite offspring + 25 fully random creatures
@@ -417,7 +417,7 @@ A single food pellet (200-500 energy) now sustains a creature for 4-10 seconds. 
 ---
 
 ### Step 12: Fix Fitness Function
-**Status:** Not started
+**Status:** Done
 **Effort:** Trivial | **Impact:** 🔥🔥
 
 The current fitness formula makes survival time worth 1 billion per second and babies worth 10 million each. A creature that lives 1 extra second but never breeds outscores one that breeds 99 times. This selects for energy-hoarding hermits, not reproductive success.
